@@ -1,4 +1,4 @@
-#pragma once
+#include "hh_basic_alloc.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <climits>
@@ -6,11 +6,10 @@
 #include <cstring>
 #include <cstdio>
 
-namespace hh_alloc
+namespace hh_basic_alloc
 {
-    using mem_size_t = unsigned long long;
+    mem_node *__head = nullptr, *__tail = nullptr;
 
-    constexpr mem_size_t BLOCK_SIZE = 4096;
     inline bool is_free(mem_size_t &size) { return (size & (1ull << 63)); }
     inline void make_free(mem_size_t &size) { size |= (1ull << 63); }
     inline void make_used(mem_size_t &size) { size &= ~(1ull << 63); }
@@ -29,27 +28,8 @@ namespace hh_alloc
         return a - b;
     }
 
-    struct mem_node
-    {
-        mem_node *nxt, *prv;
-        mem_size_t size;
-    };
-
-    const mem_size_t mem_node_size = sizeof(mem_node);
-
-    mem_node *__head, *__tail;
-
     void *sbrk_then_alloc(mem_size_t size)
     {
-
-        // if (__tail && is_free(__tail->size))
-        // {
-        //     sbrk(sub(size, __tail->size));
-        //     __tail->size = size;
-        //     make_used(__tail->size);
-        //     return (void *)(__tail + 1);
-        // }
-
         mem_node *nxt_node_addr = (mem_node *)sbrk(size + mem_node_size);
         if (nxt_node_addr == (void *)-1)
         {
@@ -96,18 +76,20 @@ namespace hh_alloc
         // Try to merge with the previous node
         if (nd->prv && is_free(nd->prv->size))
         {
-            if (nd->prv == __head)
-                __head = nd;
-            nd->size = add(nd->size, nd->prv->size);
-            nd->size = add(nd->size, mem_node_size);
-            make_free(nd->size);
+            if (__tail == nd)
+                __tail = nd->prv;
 
-            nd->prv = nd->prv->prv;
-            if (nd->prv)
-                nd->prv->nxt = nd;
+            nd->prv->size = add(nd->prv->size, nd->size);
+            nd->prv->size = add(nd->prv->size, mem_node_size);
+            make_free(nd->prv->size);
+
+            nd->prv->nxt = nd->nxt;
+            if (nd->nxt)
+                nd->nxt->prv = nd->prv;
         }
 
-        __tail->nxt = nullptr;
+        if (__tail)
+            __tail->nxt = nullptr;
     }
     void *free(void *ptr)
     {
@@ -124,9 +106,10 @@ namespace hh_alloc
     void shrink_then_align(mem_node *nd, mem_size_t size)
     {
         mem_size_t fragment = sub(nd->size, size);
-        if (fragment > 4ull + mem_node_size)
+        if (fragment > MIN_FRAGMENT_SIZE + mem_node_size)
         {
-            mem_node *new_node = (mem_node *)((void *)(nd + mem_node_size) + size);
+            // Calculate the address of the new node: skip past current node's header and data
+            mem_node *new_node = (mem_node *)((char *)(nd + 1) + size);
             new_node->size = sub(fragment, mem_node_size);
             make_free(new_node->size);
 
@@ -146,7 +129,8 @@ namespace hh_alloc
             else
                 try_merge(new_node);
         }
-        __tail->nxt = nullptr;
+        if (__tail)
+            __tail->nxt = nullptr;
     }
 
     void *try_alloc(mem_size_t size)
@@ -213,6 +197,10 @@ namespace hh_alloc
     void *try_calloc(size_t num, size_t size)
     {
         if (num == 0 || size == 0)
+            return nullptr;
+
+        // Check for overflow
+        if (num > ULLONG_MAX / size)
             return nullptr;
 
         void *ptr = try_alloc(num * size);
