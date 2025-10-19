@@ -3,8 +3,7 @@
 project(basic_alloc VERSION 1.0 LANGUAGES CXX)
 
 add_library(basic_alloc STATIC 
-    hh_basic_alloc.cpp
-    hh_basic_alloc.hpp
+  ./basic_alloc.cpp
 )
 
 

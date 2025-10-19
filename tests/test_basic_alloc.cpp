@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../basic-allocator/hh_basic_alloc.hpp"
+#include "../basic-allocator/basic_alloc.hpp"
 #include <cstring>
 #include <vector>
 #include <algorithm>
@@ -20,7 +20,7 @@ protected:
 // Test basic allocation
 TEST_F(AllocatorTest, BasicAllocation)
 {
-    void *ptr = hh_basic_alloc::try_alloc(100);
+    void *ptr = hh::basic_alloc::try_alloc(100);
     ASSERT_NE(ptr, nullptr);
 
     // Write to the allocated memory
@@ -33,13 +33,13 @@ TEST_F(AllocatorTest, BasicAllocation)
         EXPECT_EQ(data[i], 0xAB);
     }
 
-    hh_basic_alloc::free(ptr);
+    hh::basic_alloc::free(ptr);
 }
 
 // Test allocation of zero size
 TEST_F(AllocatorTest, ZeroSizeAllocation)
 {
-    void *ptr = hh_basic_alloc::try_alloc(0);
+    void *ptr = hh::basic_alloc::try_alloc(0);
     EXPECT_EQ(ptr, nullptr);
 }
 
@@ -50,7 +50,7 @@ TEST_F(AllocatorTest, MultipleAllocations)
 
     for (int i = 0; i < 10; i++)
     {
-        void *ptr = hh_basic_alloc::try_alloc(64);
+        void *ptr = hh::basic_alloc::try_alloc(64);
         ASSERT_NE(ptr, nullptr);
         ptrs.push_back(ptr);
 
@@ -71,45 +71,45 @@ TEST_F(AllocatorTest, MultipleAllocations)
     // Free all
     for (void *ptr : ptrs)
     {
-        hh_basic_alloc::free(ptr);
+        hh::basic_alloc::free(ptr);
     }
 }
 
 // Test free with nullptr
 TEST_F(AllocatorTest, FreeNullptr)
 {
-    void *result = hh_basic_alloc::free(nullptr);
+    void *result = hh::basic_alloc::free(nullptr);
     EXPECT_EQ(result, nullptr);
 }
 
 // Test allocation and deallocation pattern
 TEST_F(AllocatorTest, AllocFreePairPatterns)
 {
-    void *ptr1 = hh_basic_alloc::try_alloc(100);
+    void *ptr1 = hh::basic_alloc::try_alloc(100);
     ASSERT_NE(ptr1, nullptr);
 
-    void *ptr2 = hh_basic_alloc::try_alloc(200);
+    void *ptr2 = hh::basic_alloc::try_alloc(200);
     ASSERT_NE(ptr2, nullptr);
 
-    void *ptr3 = hh_basic_alloc::try_alloc(300);
+    void *ptr3 = hh::basic_alloc::try_alloc(300);
     ASSERT_NE(ptr3, nullptr);
 
     // Free middle block
-    hh_basic_alloc::free(ptr2);
+    hh::basic_alloc::free(ptr2);
 
     // Allocate something that should fit in the freed block
-    void *ptr4 = hh_basic_alloc::try_alloc(150);
+    void *ptr4 = hh::basic_alloc::try_alloc(150);
     ASSERT_NE(ptr4, nullptr);
 
-    hh_basic_alloc::free(ptr1);
-    hh_basic_alloc::free(ptr3);
-    hh_basic_alloc::free(ptr4);
+    hh::basic_alloc::free(ptr1);
+    hh::basic_alloc::free(ptr3);
+    hh::basic_alloc::free(ptr4);
 }
 
 // Test realloc with nullptr (should behave like alloc)
 TEST_F(AllocatorTest, ReallocWithNullptr)
 {
-    void *ptr = hh_basic_alloc::try_realloc(nullptr, 100);
+    void *ptr = hh::basic_alloc::try_realloc(nullptr, 100);
     ASSERT_NE(ptr, nullptr);
 
     memset(ptr, 0xCC, 100);
@@ -119,13 +119,13 @@ TEST_F(AllocatorTest, ReallocWithNullptr)
         EXPECT_EQ(data[i], 0xCC);
     }
 
-    hh_basic_alloc::free(ptr);
+    hh::basic_alloc::free(ptr);
 }
 
 // Test realloc to larger size
 TEST_F(AllocatorTest, ReallocLarger)
 {
-    void *ptr = hh_basic_alloc::try_alloc(50);
+    void *ptr = hh::basic_alloc::try_alloc(50);
     ASSERT_NE(ptr, nullptr);
 
     // Write pattern
@@ -135,7 +135,7 @@ TEST_F(AllocatorTest, ReallocLarger)
     }
 
     // Realloc to larger size
-    void *new_ptr = hh_basic_alloc::try_realloc(ptr, 200);
+    void *new_ptr = hh::basic_alloc::try_realloc(ptr, 200);
     ASSERT_NE(new_ptr, nullptr);
 
     // Verify old data is preserved
@@ -144,13 +144,13 @@ TEST_F(AllocatorTest, ReallocLarger)
         EXPECT_EQ(((char *)new_ptr)[i], i);
     }
 
-    hh_basic_alloc::free(new_ptr);
+    hh::basic_alloc::free(new_ptr);
 }
 
 // Test realloc to smaller size
 TEST_F(AllocatorTest, ReallocSmaller)
 {
-    void *ptr = hh_basic_alloc::try_alloc(200);
+    void *ptr = hh::basic_alloc::try_alloc(200);
     ASSERT_NE(ptr, nullptr);
 
     // Write pattern
@@ -160,7 +160,7 @@ TEST_F(AllocatorTest, ReallocSmaller)
     }
 
     // Realloc to smaller size
-    void *new_ptr = hh_basic_alloc::try_realloc(ptr, 50);
+    void *new_ptr = hh::basic_alloc::try_realloc(ptr, 50);
     ASSERT_NE(new_ptr, nullptr);
 
     // Verify first 50 bytes are preserved
@@ -169,13 +169,13 @@ TEST_F(AllocatorTest, ReallocSmaller)
         EXPECT_EQ(((char *)new_ptr)[i], i % 256);
     }
 
-    hh_basic_alloc::free(new_ptr);
+    hh::basic_alloc::free(new_ptr);
 }
 
 // Test calloc basic functionality
 TEST_F(AllocatorTest, CallocBasic)
 {
-    void *ptr = hh_basic_alloc::try_calloc(10, 10);
+    void *ptr = hh::basic_alloc::try_calloc(10, 10);
     ASSERT_NE(ptr, nullptr);
 
     // Verify all bytes are zero
@@ -185,19 +185,19 @@ TEST_F(AllocatorTest, CallocBasic)
         EXPECT_EQ(data[i], 0);
     }
 
-    hh_basic_alloc::free(ptr);
+    hh::basic_alloc::free(ptr);
 }
 
 // Test calloc with zero parameters
 TEST_F(AllocatorTest, CallocZeroSize)
 {
-    void *ptr1 = hh_basic_alloc::try_calloc(0, 10);
+    void *ptr1 = hh::basic_alloc::try_calloc(0, 10);
     EXPECT_EQ(ptr1, nullptr);
 
-    void *ptr2 = hh_basic_alloc::try_calloc(10, 0);
+    void *ptr2 = hh::basic_alloc::try_calloc(10, 0);
     EXPECT_EQ(ptr2, nullptr);
 
-    void *ptr3 = hh_basic_alloc::try_calloc(0, 0);
+    void *ptr3 = hh::basic_alloc::try_calloc(0, 0);
     EXPECT_EQ(ptr3, nullptr);
 }
 
@@ -205,14 +205,14 @@ TEST_F(AllocatorTest, CallocZeroSize)
 TEST_F(AllocatorTest, CallocOverflowProtection)
 {
     // Try to allocate something that would overflow
-    void *ptr = hh_basic_alloc::try_calloc(ULLONG_MAX / 2, ULLONG_MAX / 2);
+    void *ptr = hh::basic_alloc::try_calloc(ULLONG_MAX / 2, ULLONG_MAX / 2);
     EXPECT_EQ(ptr, nullptr);
 }
 
 // Test large allocation
 TEST_F(AllocatorTest, LargeAllocation)
 {
-    void *ptr = hh_basic_alloc::try_alloc(1024 * 1024); // 1MB
+    void *ptr = hh::basic_alloc::try_alloc(1024 * 1024); // 1MB
     ASSERT_NE(ptr, nullptr);
 
     // Write to some parts of it to make sure it's valid
@@ -222,35 +222,35 @@ TEST_F(AllocatorTest, LargeAllocation)
     EXPECT_EQ(((char *)ptr)[0], 'A');
     EXPECT_EQ(((char *)ptr)[1024 * 1024 - 1], 'Z');
 
-    hh_basic_alloc::free(ptr);
+    hh::basic_alloc::free(ptr);
 }
 
 // Test memory coalescing (merging free blocks)
 TEST_F(AllocatorTest, MemoryCoalescing)
 {
     // Allocate three consecutive blocks
-    void *ptr1 = hh_basic_alloc::try_alloc(100);
-    void *ptr2 = hh_basic_alloc::try_alloc(100);
-    void *ptr3 = hh_basic_alloc::try_alloc(100);
+    void *ptr1 = hh::basic_alloc::try_alloc(100);
+    void *ptr2 = hh::basic_alloc::try_alloc(100);
+    void *ptr3 = hh::basic_alloc::try_alloc(100);
 
     ASSERT_NE(ptr1, nullptr);
     ASSERT_NE(ptr2, nullptr);
     ASSERT_NE(ptr3, nullptr);
 
     // Free middle block first
-    hh_basic_alloc::free(ptr2);
+    hh::basic_alloc::free(ptr2);
 
     // Free first block - should merge with middle
-    hh_basic_alloc::free(ptr1);
+    hh::basic_alloc::free(ptr1);
 
     // Free last block - should merge with previous merged block
-    hh_basic_alloc::free(ptr3);
+    hh::basic_alloc::free(ptr3);
 
     // Now allocate a larger block - should reuse merged space
-    void *ptr4 = hh_basic_alloc::try_alloc(250);
+    void *ptr4 = hh::basic_alloc::try_alloc(250);
     ASSERT_NE(ptr4, nullptr);
 
-    hh_basic_alloc::free(ptr4);
+    hh::basic_alloc::free(ptr4);
 }
 
 // Test fragmentation scenario
@@ -261,7 +261,7 @@ TEST_F(AllocatorTest, Fragmentation)
     // Allocate many small blocks
     for (int i = 0; i < 20; i++)
     {
-        void *ptr = hh_basic_alloc::try_alloc(32);
+        void *ptr = hh::basic_alloc::try_alloc(32);
         ASSERT_NE(ptr, nullptr);
         ptrs.push_back(ptr);
     }
@@ -269,13 +269,13 @@ TEST_F(AllocatorTest, Fragmentation)
     // Free every other block
     for (size_t i = 0; i < ptrs.size(); i += 2)
     {
-        hh_basic_alloc::free(ptrs[i]);
+        hh::basic_alloc::free(ptrs[i]);
     }
 
     // Allocate blocks that should fit in freed spaces
     for (int i = 0; i < 10; i++)
     {
-        void *ptr = hh_basic_alloc::try_alloc(24);
+        void *ptr = hh::basic_alloc::try_alloc(24);
         ASSERT_NE(ptr, nullptr);
         // Don't add to ptrs vector, will be cleaned up by later allocations
     }
@@ -283,7 +283,7 @@ TEST_F(AllocatorTest, Fragmentation)
     // Free remaining original blocks
     for (size_t i = 1; i < ptrs.size(); i += 2)
     {
-        hh_basic_alloc::free(ptrs[i]);
+        hh::basic_alloc::free(ptrs[i]);
     }
 }
 
@@ -295,7 +295,7 @@ TEST_F(AllocatorTest, VariousSizes)
 
     for (size_t size : sizes)
     {
-        void *ptr = hh_basic_alloc::try_alloc(size);
+        void *ptr = hh::basic_alloc::try_alloc(size);
         ASSERT_NE(ptr, nullptr);
 
         // Write to allocated memory
@@ -318,14 +318,14 @@ TEST_F(AllocatorTest, VariousSizes)
     // Free all
     for (void *ptr : ptrs)
     {
-        hh_basic_alloc::free(ptr);
+        hh::basic_alloc::free(ptr);
     }
 }
 
 // Test realloc preserves data correctly
 TEST_F(AllocatorTest, ReallocPreservesData)
 {
-    void *ptr = hh_basic_alloc::try_alloc(100);
+    void *ptr = hh::basic_alloc::try_alloc(100);
     ASSERT_NE(ptr, nullptr);
 
     // Write unique pattern
@@ -335,7 +335,7 @@ TEST_F(AllocatorTest, ReallocPreservesData)
     }
 
     // Realloc to much larger size (likely new allocation)
-    void *new_ptr = hh_basic_alloc::try_realloc(ptr, 1000);
+    void *new_ptr = hh::basic_alloc::try_realloc(ptr, 1000);
     ASSERT_NE(new_ptr, nullptr);
 
     // Verify original data is preserved
@@ -344,27 +344,27 @@ TEST_F(AllocatorTest, ReallocPreservesData)
         EXPECT_EQ(((unsigned char *)new_ptr)[i], (i * 7) % 256);
     }
 
-    hh_basic_alloc::free(new_ptr);
+    hh::basic_alloc::free(new_ptr);
 }
 
 // Test splitting behavior
 TEST_F(AllocatorTest, BlockSplitting)
 {
     // Allocate and free a large block
-    void *ptr1 = hh_basic_alloc::try_alloc(1000);
+    void *ptr1 = hh::basic_alloc::try_alloc(1000);
     ASSERT_NE(ptr1, nullptr);
-    hh_basic_alloc::free(ptr1);
+    hh::basic_alloc::free(ptr1);
 
     // Allocate a much smaller block - should split the large free block
-    void *ptr2 = hh_basic_alloc::try_alloc(100);
+    void *ptr2 = hh::basic_alloc::try_alloc(100);
     ASSERT_NE(ptr2, nullptr);
 
     // Should be able to allocate another block from the remainder
-    void *ptr3 = hh_basic_alloc::try_alloc(100);
+    void *ptr3 = hh::basic_alloc::try_alloc(100);
     ASSERT_NE(ptr3, nullptr);
 
-    hh_basic_alloc::free(ptr2);
-    hh_basic_alloc::free(ptr3);
+    hh::basic_alloc::free(ptr2);
+    hh::basic_alloc::free(ptr3);
 }
 
 // Test mem_copy helper function
@@ -381,7 +381,7 @@ TEST_F(AllocatorTest, MemCopyFunction)
 
     memset(dest, 0, 50);
 
-    hh_basic_alloc::mem_copy(dest, src, 50);
+    hh::basic_alloc::mem_copy(dest, src, 50);
 
     // Verify copy
     for (int i = 0; i < 50; i++)
@@ -396,9 +396,9 @@ TEST_F(AllocatorTest, MemCopyWithNull)
     char buffer[10];
     memset(buffer, 0, 10);
     // Should handle gracefully
-    hh_basic_alloc::mem_copy(nullptr, buffer, 10);
-    hh_basic_alloc::mem_copy(buffer, nullptr, 10);
-    hh_basic_alloc::mem_copy(buffer, buffer, 0);
+    hh::basic_alloc::mem_copy(nullptr, buffer, 10);
+    hh::basic_alloc::mem_copy(buffer, nullptr, 10);
+    hh::basic_alloc::mem_copy(buffer, buffer, 0);
 }
 
 // Test mem_set helper function
@@ -406,7 +406,7 @@ TEST_F(AllocatorTest, MemSetFunction)
 {
     char buffer[100];
 
-    hh_basic_alloc::mem_set(buffer, 0xAA, 100);
+    hh::basic_alloc::mem_set(buffer, 0xAA, 100);
 
     for (int i = 0; i < 100; i++)
     {
@@ -417,10 +417,10 @@ TEST_F(AllocatorTest, MemSetFunction)
 // Test mem_set with nullptr and zero size
 TEST_F(AllocatorTest, MemSetWithNullAndZero)
 {
-    hh_basic_alloc::mem_set(nullptr, 0xFF, 100); // Should not crash
+    hh::basic_alloc::mem_set(nullptr, 0xFF, 100); // Should not crash
 
     char buffer[10] = {0};
-    hh_basic_alloc::mem_set(buffer, 0xFF, 0); // Should not modify
+    hh::basic_alloc::mem_set(buffer, 0xFF, 0); // Should not modify
     EXPECT_EQ(buffer[0], 0);
 }
 
@@ -433,7 +433,7 @@ TEST_F(AllocatorTest, StressTest)
     for (int i = 0; i < 100; i++)
     {
         size_t size = (i % 10 + 1) * 16;
-        void *ptr = hh_basic_alloc::try_alloc(size);
+        void *ptr = hh::basic_alloc::try_alloc(size);
         if (ptr)
         {
             memset(ptr, i % 256, size);
@@ -454,14 +454,14 @@ TEST_F(AllocatorTest, StressTest)
 
     for (size_t i = 0; i < indices.size() / 2; i++)
     {
-        hh_basic_alloc::free(ptrs[indices[i]]);
+        hh::basic_alloc::free(ptrs[indices[i]]);
         ptrs[indices[i]] = nullptr;
     }
 
     // Allocate more
     for (int i = 0; i < 50; i++)
     {
-        void *ptr = hh_basic_alloc::try_alloc(64);
+        void *ptr = hh::basic_alloc::try_alloc(64);
         if (ptr)
         {
             ptrs.push_back(ptr);
@@ -473,7 +473,7 @@ TEST_F(AllocatorTest, StressTest)
     {
         if (ptr)
         {
-            hh_basic_alloc::free(ptr);
+            hh::basic_alloc::free(ptr);
         }
     }
 }
@@ -481,40 +481,40 @@ TEST_F(AllocatorTest, StressTest)
 // Test is_free, make_free, make_used, get_size functions
 TEST_F(AllocatorTest, HelperFunctions)
 {
-    hh_basic_alloc::mem_size_t size = 100;
+    hh::basic_alloc::mem_size_t size = 100;
 
     // Initially not free
-    hh_basic_alloc::make_used(size);
-    EXPECT_FALSE(hh_basic_alloc::is_free(size));
-    EXPECT_EQ(hh_basic_alloc::get_size(size), 100);
+    hh::basic_alloc::make_used(size);
+    EXPECT_FALSE(hh::basic_alloc::is_free(size));
+    EXPECT_EQ(hh::basic_alloc::get_size(size), 100);
 
     // Mark as free
-    hh_basic_alloc::make_free(size);
-    EXPECT_TRUE(hh_basic_alloc::is_free(size));
-    EXPECT_EQ(hh_basic_alloc::get_size(size), 100);
+    hh::basic_alloc::make_free(size);
+    EXPECT_TRUE(hh::basic_alloc::is_free(size));
+    EXPECT_EQ(hh::basic_alloc::get_size(size), 100);
 
     // Mark as used again
-    hh_basic_alloc::make_used(size);
-    EXPECT_FALSE(hh_basic_alloc::is_free(size));
-    EXPECT_EQ(hh_basic_alloc::get_size(size), 100);
+    hh::basic_alloc::make_used(size);
+    EXPECT_FALSE(hh::basic_alloc::is_free(size));
+    EXPECT_EQ(hh::basic_alloc::get_size(size), 100);
 }
 
 // Test add and sub helper functions
 TEST_F(AllocatorTest, AddSubFunctions)
 {
-    hh_basic_alloc::mem_size_t a = 100;
-    hh_basic_alloc::mem_size_t b = 50;
+    hh::basic_alloc::mem_size_t a = 100;
+    hh::basic_alloc::mem_size_t b = 50;
 
-    hh_basic_alloc::make_free(a);
-    hh_basic_alloc::make_free(b);
+    hh::basic_alloc::make_free(a);
+    hh::basic_alloc::make_free(b);
 
-    hh_basic_alloc::mem_size_t result_add = hh_basic_alloc::add(a, b);
+    hh::basic_alloc::mem_size_t result_add = hh::basic_alloc::add(a, b);
     EXPECT_EQ(result_add, 150);
-    EXPECT_FALSE(hh_basic_alloc::is_free(result_add)); // add should clear free bit
+    EXPECT_FALSE(hh::basic_alloc::is_free(result_add)); // add should clear free bit
 
-    hh_basic_alloc::mem_size_t result_sub = hh_basic_alloc::sub(a, b);
+    hh::basic_alloc::mem_size_t result_sub = hh::basic_alloc::sub(a, b);
     EXPECT_EQ(result_sub, 50);
-    EXPECT_FALSE(hh_basic_alloc::is_free(result_sub)); // sub should clear free bit
+    EXPECT_FALSE(hh::basic_alloc::is_free(result_sub)); // sub should clear free bit
 }
 
 int main(int argc, char **argv)

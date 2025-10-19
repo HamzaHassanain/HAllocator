@@ -8,6 +8,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -g -O0")
 
 
 add_subdirectory(basic-allocator)
+add_subdirectory(rb-tree)
+add_subdirectory(actual-allocator)
+# add_subdirectory(smart-allocator)
 
 enable_testing()
 
@@ -21,6 +24,10 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+
+add_executable(hh_alloc app.cpp)
+
+target_link_libraries(hh_alloc PRIVATE rb_tree )
 
 add_subdirectory(tests)
 

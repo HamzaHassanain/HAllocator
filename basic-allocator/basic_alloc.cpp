@@ -1,4 +1,4 @@
-#include "hh_basic_alloc.hpp"
+#include "basic_alloc.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <climits>
@@ -6,7 +6,7 @@
 #include <cstring>
 #include <cstdio>
 
-namespace hh_basic_alloc
+namespace hh::basic_alloc
 {
     mem_node *__head = nullptr, *__tail = nullptr;
 
