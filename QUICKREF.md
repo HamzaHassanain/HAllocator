@@ -4,12 +4,12 @@
 
 ```bash
 # 1. Before committing code
-./build.sh format              # Auto-format all files
-./build.sh test                # Run all tests
+./scripts.sh format              # Auto-format all files
+./scripts.sh test                # Run all tests
 
 # 2. Weekly deep check
-./build.sh lint                # Run static analysis
-./build.sh sanitize address    # Build with sanitizer
+./scripts.sh lint                # Run static analysis
+./scripts.sh sanitize address    # Build with sanitizer
 cd out && ctest --output-on-failure
 ```
 
@@ -17,16 +17,16 @@ cd out && ctest --output-on-failure
 
 ## 🎯 **Quick Commands**
 
-| Command                         | Description                   |
-| ------------------------------- | ----------------------------- |
-| `./build.sh format`             | Format all code files         |
-| `./build.sh format-check`       | Check if formatting is needed |
-| `./build.sh lint`               | Run clang-tidy linter         |
-| `./build.sh sanitize address`   | Build with AddressSanitizer   |
-| `./build.sh sanitize thread`    | Build with ThreadSanitizer    |
-| `./build.sh sanitize undefined` | Build with UBSanitizer        |
-| `./build.sh clean build`        | Clean build from scratch      |
-| `./build.sh test [PATTERN]`     | Run tests (optional filter)   |
+| Command                           | Description                   |
+| --------------------------------- | ----------------------------- |
+| `./scripts.sh format`             | Format all code files         |
+| `./scripts.sh format-check`       | Check if formatting is needed |
+| `./scripts.sh lint`               | Run clang-tidy linter         |
+| `./scripts.sh sanitize address`   | Build with AddressSanitizer   |
+| `./scripts.sh sanitize thread`    | Build with ThreadSanitizer    |
+| `./scripts.sh sanitize undefined` | Build with UBSanitizer        |
+| `./scripts.sh clean build`        | Clean build from scratch      |
+| `./scripts.sh test [PATTERN]`     | Run tests (optional filter)   |
 
 ---
 
@@ -57,7 +57,7 @@ cd out && ctest --output-on-failure
 ### ✅ Good formatting:
 
 ```
-$ ./build.sh format-check
+$ ./scripts.sh format-check
 Checking code formatting...
 ✅ All files are properly formatted!
 ```
@@ -65,18 +65,18 @@ Checking code formatting...
 ### ❌ Needs formatting:
 
 ```
-$ ./build.sh format-check
+$ ./scripts.sh format-check
 Checking code formatting...
 ❌ Some files need formatting:
 ./halloc/src/Block.ipp:142:5: error: code should be clang-formatted
 
-Run './build.sh format' to fix formatting issues.
+Run './scripts.sh format' to fix formatting issues.
 ```
 
 ### 🔍 Linter output:
 
 ```
-$ ./build.sh lint
+$ ./scripts.sh lint
 Running clang-tidy linter...
 /path/to/file.cpp:42:10: warning: variable 'x' is not used [clang-diagnostic-unused-variable]
     int x = 5;
@@ -86,7 +86,7 @@ Running clang-tidy linter...
 ### 🧪 Sanitizer output:
 
 ```
-$ ./build.sh sanitize address
+$ ./scripts.sh sanitize address
 $ cd out && ctest
 =================================================================
 ==12345==ERROR: AddressSanitizer: heap-use-after-free
@@ -113,7 +113,7 @@ READ of size 4 at 0x60300000eff0 thread T0
 1. **Run format before every commit**
 
    ```bash
-   ./build.sh format && git add -u
+   ./scripts.sh format && git add -u
    ```
 
 2. **Format only changed files** (faster)
@@ -125,7 +125,7 @@ READ of size 4 at 0x60300000eff0 thread T0
 3. **Run sanitizers on CI/CD**
 
    ```bash
-   ./build.sh sanitize address && cd out && ctest --output-on-failure
+   ./scripts.sh sanitize address && cd out && ctest --output-on-failure
    ```
 
 4. **VS Code integration**
@@ -136,9 +136,9 @@ READ of size 4 at 0x60300000eff0 thread T0
 
 5. **Check before push**
    ```bash
-   ./build.sh format-check && \
-   ./build.sh clean build && \
-   ./build.sh test && \
+   ./scripts.sh format-check && \
+   ./scripts.sh clean build && \
+   ./scripts.sh test && \
    echo "✅ Ready to push!"
    ```
 

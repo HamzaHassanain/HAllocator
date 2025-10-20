@@ -24,7 +24,7 @@ jobs:
         run: sudo apt-get install -y clang-format
 
       - name: Check formatting
-        run: ./build.sh format-check
+        run: ./scripts.sh format-check
 
   build-and-test:
     name: Build and Test
@@ -38,10 +38,10 @@ jobs:
           sudo apt-get install -y cmake build-essential clang clang-tidy
 
       - name: Build
-        run: ./build.sh clean build
+        run: ./scripts.sh clean build
 
       - name: Run tests
-        run: ./build.sh test
+        run: ./scripts.sh test
 
   sanitizer-tests:
     name: Sanitizer Tests
@@ -58,7 +58,7 @@ jobs:
           sudo apt-get install -y cmake build-essential clang
 
       - name: Build with ${{ matrix.sanitizer }} sanitizer
-        run: ./build.sh sanitize ${{ matrix.sanitizer }}
+        run: ./scripts.sh sanitize ${{ matrix.sanitizer }}
 
       - name: Run tests
         run: cd out && ctest --output-on-failure
@@ -75,4 +75,4 @@ jobs:
           sudo apt-get install -y cmake build-essential clang-tidy
 
       - name: Run linter
-        run: ./build.sh lint
+        run: ./scripts.sh lint

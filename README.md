@@ -1,18 +1,16 @@
 # A Simple C++ Allocator
 
-
-
 ## 🚀 Quick Start
 
 ```bash
 # Build the project
-./build.sh
+./scripts.sh
 
 # Run tests
-./build.sh test
+./scripts.sh test
 
 # Build with sanitizer (recommended for development)
-./build.sh sanitize address
+./scripts.sh sanitize address
 cd out && ctest --output-on-failure
 ```
 
@@ -27,10 +25,10 @@ This project uses industry-standard tools for code quality:
 ### Quick Commands:
 
 ```bash
-./build.sh format        # Format all code
-./build.sh format-check  # Check formatting
-./build.sh lint          # Run linter
-./build.sh sanitize address  # Build with AddressSanitizer
+./scripts.sh format        # Format all code
+./scripts.sh format-check  # Check formatting
+./scripts.sh lint          # Run linter
+./scripts.sh sanitize address  # Build with AddressSanitizer
 ```
 
 📚 **See [QUICKREF.md](QUICKREF.md) for quick reference**  
@@ -39,12 +37,12 @@ This project uses industry-standard tools for code quality:
 ## 📋 Build Script Commands
 
 ```bash
-./build.sh help          # Show all available commands
-./build.sh clean         # Remove build directory
-./build.sh build         # Build project
-./build.sh test [FILTER] # Run tests (optional: filter by name)
-./build.sh run           # Run main executable
-./build.sh format        # Format all source files
-./build.sh lint          # Run clang-tidy linter
-./build.sh sanitize [TYPE] # Build with sanitizer (TYPE: address, thread, undefined, memory, leak)
+./scripts.sh help          # Show all available commands
+./scripts.sh clean         # Remove build directory
+./scripts.sh build         # Build project
+./scripts.sh test [FILTER] # Run tests (optional: filter by name)
+./scripts.sh run           # Run main executable
+./scripts.sh format        # Format all source files
+./scripts.sh lint          # Run clang-tidy linter
+./scripts.sh sanitize [TYPE] # Build with sanitizer (TYPE: address, thread, undefined, memory, leak)
 ```

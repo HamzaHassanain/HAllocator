@@ -3,14 +3,14 @@
 # Exit on any error
 set -e
 
-echo "Building Allocators..."
+echo "Running Script..."
 
 # Ensure we're in the project root directory
 cd "$(dirname "$0")"
 
 # ==================== HELP ====================
 if [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: ./build.sh [COMMAND] [OPTIONS]"
+    echo "Usage: ./scripts.sh [COMMAND] [OPTIONS]"
     echo ""
     echo "Commands:"
     echo "  clean              - Remove build directory"
@@ -24,12 +24,13 @@ if [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "  help               - Show this help message"
     echo ""
     echo "Examples:"
-    echo "  ./build.sh clean build"
-    echo "  ./build.sh test BlockTest"
-    echo "  ./build.sh sanitize address"
-    echo "  ./build.sh format"
+    echo "  ./scripts.sh clean build"
+    echo "  ./scripts.sh test BlockTest"
+    echo "  ./scripts.sh sanitize address"
+    echo "  ./scripts.sh format"
     exit 0
 fi
+
 
 # ==================== CLEAN ====================
 if [ "$1" = "clean" ]; then
@@ -37,6 +38,30 @@ if [ "$1" = "clean" ]; then
     rm -rf out
     shift
 fi
+
+
+
+# ==================== NORMAL BUILD ====================
+# Create build directory if it doesn't exist
+
+if [ "$1" = "build" ] || [ -z "$1" ]; then
+    echo "Building project..."
+    
+    mkdir -p out
+    
+    # Configure the project with CMake
+    echo "Configuring CMake..."
+    cmake -S . -B out
+    
+    # Build the project
+    echo "Building project..."
+    cd out
+    make -j$(nproc)
+    cd ..
+    
+    echo "Build completed successfully!"
+fi
+
 
 # ==================== FORMAT ====================
 if [ "$1" = "format" ]; then
@@ -58,7 +83,7 @@ if [ "$1" = "format-check" ]; then
         echo "❌ Some files need formatting:"
         echo "$NEEDS_FORMAT"
         echo ""
-        echo "Run './build.sh format' to fix formatting issues."
+        echo "Run './scripts.sh format' to fix formatting issues."
         exit 1
     else
         echo "✅ All files are properly formatted!"
@@ -98,22 +123,6 @@ if [ "$1" = "sanitize" ]; then
     echo "Run tests with: cd out && ctest --output-on-failure"
     exit 0
 fi
-
-# ==================== NORMAL BUILD ====================
-# Create build directory if it doesn't exist
-mkdir -p out
-
-# Configure the project with CMake
-echo "Configuring CMake..."
-cmake -S . -B out
-
-# Build the project
-echo "Building project..."
-cd out
-make -j$(nproc)
-cd ..
-
-echo "Build completed successfully!"
 
 # ==================== TEST ====================
 if [ "$1" = "test" ]; then
