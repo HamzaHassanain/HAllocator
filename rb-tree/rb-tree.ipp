@@ -1,39 +1,106 @@
+/**
+ * @file rb-tree.ipp
+ * @brief Implementation of Red-Black Tree operations
+ */
+
 #include "rb-tree.hpp"
 
 namespace hh::rb_tree
 {
 
-    void set_color_red(std::size_t &value)
+    /**
+     * @brief Sets the color of a node to RED
+     *
+     * Marks the node as red by setting bit 63 of the value field to 1.
+     *
+     * @param value Reference to the node's value field
+     * @post Bit 63 of value is set to 1 (RED)
+     */
+    inline void set_color_red(std::size_t &value)
     {
         value |= (1ull << 63);
     }
-    void set_color_black(std::size_t &value)
+
+    /**
+     * @brief Sets the color of a node to BLACK
+     *
+     * Marks the node as black by clearing bit 63 of the value field.
+     *
+     * @param value Reference to the node's value field
+     * @post Bit 63 of value is set to 0 (BLACK)
+     */
+    inline void set_color_black(std::size_t &value)
     {
         value &= ~(1ull << 63);
     }
 
-    bool is_red(const std::size_t &value)
+    /**
+     * @brief Checks if a node is RED
+     *
+     * @param value The node's value field
+     * @return true if the node is red (bit 63 is set), false otherwise
+     */
+    inline bool is_red(const std::size_t &value)
     {
         return (value & (1ull << 63));
     }
 
-    bool is_black(const std::size_t &value)
+    /**
+     * @brief Checks if a node is BLACK
+     *
+     * @param value The node's value field
+     * @return true if the node is black (bit 63 is clear), false otherwise
+     */
+    inline bool is_black(const std::size_t &value)
     {
         return !(value & (1ull << 63));
     }
 
-    std::size_t get_value(const std::size_t &value)
+    /**
+     * @brief Extracts the actual value without the color bit
+     *
+     * Masks out bit 63 (color bit) and returns the actual stored value.
+     *
+     * @param value The node's value field including color bit
+     * @return The actual value with color bit cleared
+     */
+    inline std::size_t get_value(const std::size_t &value)
     {
         return value & ~(1ull << 63);
     }
 
+    /**
+     * @brief Gets the color bit value
+     *
+     * @param value The node's value field
+     * @return true if red, false if black
+     */
     inline bool get_color(const std::size_t &value)
     {
         return is_red(value);
     }
 
+    /**
+     * @brief Performs a left rotation around a node
+     *
+     * Rotates the subtree so that the right child moves up to take
+     * the position of the current node, and the current node becomes
+     * the left child of its former right child.
+     *
+     * Before:      node              After:    right_child
+     *             /    \                       /          \
+     *           A   right_child             node          C
+     *                /      \               /    \
+     *               B        C             A      B
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer (may be updated)
+     * @param node The node around which to rotate
+     *
+     * @pre node->right must not be nullptr
+     * @post Tree structure is modified, parent pointers updated
+     */
     template <typename rb_node>
-    /// Move the Right child up
     void left_rotate(rb_node *&root, rb_node *node)
     {
         rb_node *right_child = node->right;
@@ -55,8 +122,27 @@ namespace hh::rb_tree
         node->parent = right_child;
     }
 
+    /**
+     * @brief Performs a right rotation around a node
+     *
+     * Rotates the subtree so that the left child moves up to take
+     * the position of the current node, and the current node becomes
+     * the right child of its former left child.
+     *
+     * Before:        node          After:    left_child
+     *               /    \                    /         \
+     *         left_child  C                  A         node
+     *         /      \                                 /    \
+     *        A        B                               B      C
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer (may be updated)
+     * @param node The node around which to rotate
+     *
+     * @pre node->left must not be nullptr
+     * @post Tree structure is modified, parent pointers updated
+     */
     template <typename rb_node>
-    /// Move the Left child up
     void right_rotate(rb_node *&root, rb_node *node)
     {
         rb_node *left_child = node->left;
@@ -78,6 +164,25 @@ namespace hh::rb_tree
         node->parent = left_child;
     }
 
+    /**
+     * @brief Fixes Red-Black tree properties after insertion
+     *
+     * Restores the Red-Black tree properties that may have been violated
+     * during insertion. Handles the following violations:
+     * - Red node with red parent (double-red violation)
+     *
+     * Uses recoloring and rotations to maintain:
+     * 1. Root is black
+     * 2. No two consecutive red nodes
+     * 3. All paths have same number of black nodes
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer
+     * @param z The newly inserted node to fix violations from
+     *
+     * @post All Red-Black tree properties are restored
+     * @post Root is always black
+     */
     template <typename rb_node>
     void fix_insert(rb_node *&root, rb_node *z)
     {
@@ -131,6 +236,29 @@ namespace hh::rb_tree
         set_color_black(root->value);
     }
 
+    /**
+     * @brief Inserts a new node into the Red-Black tree
+     *
+     * Performs standard BST insertion based on node values (excluding color bit),
+     * then calls fix_insert to restore Red-Black properties.
+     *
+     * Algorithm:
+     * 1. Find the correct position using BST search
+     * 2. Insert the node as a red leaf
+     * 3. Fix any Red-Black violations
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer
+     * @param new_node The node to insert (must be allocated)
+     *
+     * @pre new_node is properly allocated
+     * @pre new_node->value has bit 63 available for coloring
+     * @post Node is inserted and colored red initially
+     * @post Red-Black properties are maintained
+     * @post Tree remains balanced
+     *
+     * @note Duplicate values are inserted to the right
+     */
     template <typename rb_node>
     void insert(rb_node *&root, rb_node *new_node)
     {
@@ -166,6 +294,20 @@ namespace hh::rb_tree
         fix_insert(root, new_node);
     }
 
+    /**
+     * @brief Replaces one subtree with another
+     *
+     * Helper function that replaces the subtree rooted at node u
+     * with the subtree rooted at node v, updating parent pointers.
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer
+     * @param u Node to be replaced
+     * @param v Node to replace with (can be nullptr)
+     *
+     * @post u's position is taken by v
+     * @post Parent pointers are correctly updated
+     */
     template <typename rb_node>
     void transplant(rb_node *&root, rb_node *u, rb_node *v)
     {
@@ -180,6 +322,28 @@ namespace hh::rb_tree
             v->parent = u->parent;
     }
 
+    /**
+     * @brief Fixes Red-Black tree properties after deletion
+     *
+     * Restores Red-Black properties after a black node has been removed.
+     * Handles the case where removing a black node creates a "double-black"
+     * violation where a path has one fewer black node.
+     *
+     * Cases handled:
+     * 1. Sibling is red
+     * 2. Sibling is black with two black children
+     * 3. Sibling is black with red left child and black right child
+     * 4. Sibling is black with red right child
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer
+     * @param x The node that replaced the deleted node (may be nullptr)
+     * @param x_parent Parent of x (needed when x is nullptr)
+     *
+     * @post Red-Black properties are restored
+     * @post All paths have equal black height
+     * @post Root is black
+     */
     template <typename rb_node>
     void fix_remove(rb_node *&root, rb_node *x, rb_node *x_parent)
     {
@@ -269,6 +433,32 @@ namespace hh::rb_tree
         if (x)
             set_color_black(x->value);
     }
+
+    /**
+     * @brief Removes a node from the Red-Black tree
+     *
+     * Removes the specified node from the tree while maintaining Red-Black
+     * properties. Handles three cases:
+     * 1. Node has no left child - replace with right child
+     * 2. Node has no right child - replace with left child
+     * 3. Node has both children - replace with successor (minimum of right subtree)
+     *
+     * After removal, if a black node was removed, fix_remove is called to
+     * restore Red-Black properties.
+     *
+     * @tparam rb_node Node type
+     * @param root Reference to the root pointer
+     * @param z The node to remove
+     *
+     * @pre z exists in the tree
+     * @pre root is not nullptr
+     * @post z is removed from the tree structure (but not deallocated)
+     * @post Red-Black properties are maintained
+     * @post Tree remains balanced
+     *
+     * @note The node is NOT deallocated, only removed from tree structure
+     * @note Caller is responsible for memory management of removed node
+     */
     template <typename rb_node>
     void remove(rb_node *&root, rb_node *z)
     {
@@ -344,19 +534,44 @@ namespace hh::rb_tree
         }
     }
 
+    /**
+     * @brief Finds the first node with value not less than the search key
+     *
+     * Performs a binary search to find the smallest node that satisfies
+     * !cmp(node_value, key), i.e., the first node where key <= node_value
+     * according to the comparator.
+     *
+     * This is equivalent to std::lower_bound for binary search trees.
+     *
+     * Algorithm:
+     * 1. Start at root and traverse down
+     * 2. If key < current_value, move left (might be result)
+     * 3. If key >= current_value, move right
+     * 4. Return the smallest valid node found
+     *
+     * @tparam rb_node Node type
+     * @param root Pointer to the root of the tree
+     * @param value The search key
+     * @param cmp Comparator function (returns true if first < second)
+     *
+     * @return Pointer to the first node >= value, or nullptr if none exists
+     *
+     * @pre cmp defines a strict weak ordering
+     * @post Tree structure is unchanged
+     *
+     * @note Time complexity: O(log n) for balanced tree
+     * @note Returns nullptr if all values are less than the search key
+     */
     template <typename rb_node>
     rb_node *lower_bound(rb_node *root, std::size_t value, bool (*cmp)(std::size_t, std::size_t))
     {
-
-        if (!root)
-            return nullptr;
 
         auto current = root;
         rb_node *result = nullptr;
         while (current)
         {
             std::size_t curr_val = get_value(current->value);
-            if (!cmp(curr_val, value))
+            if (cmp(value, curr_val))
             {
                 result = current;
                 current = current->left;

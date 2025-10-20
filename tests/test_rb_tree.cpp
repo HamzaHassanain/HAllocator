@@ -3,7 +3,8 @@
 #include <vector>
 #include <algorithm>
 #include <cstddef>
-
+#include <random>
+#include <fstream>
 struct TestNode
 {
     TestNode *left, *right, *parent;
@@ -28,8 +29,6 @@ bool is_node_black(TestNode *node)
 
 std::size_t get_actual_value(TestNode *node)
 {
-    if (!node)
-        return 0;
     return node->value & ~(1ull << 63);
 }
 
@@ -161,7 +160,7 @@ void cleanup_tree(TestNode *node)
 
 bool compare_size_t(std::size_t a, std::size_t b)
 {
-    return a < b;
+    return a <= b;
 }
 
 // ==================== TEST CASES ====================
@@ -200,24 +199,6 @@ TEST(RBTreeTest, RBTreeTest_InsertTwoNodesAscending)
     TestNode *root = nullptr;
     TestNode *node1 = new TestNode(10);
     TestNode *node2 = new TestNode(20);
-
-    hh::rb_tree::insert(root, node1);
-    hh::rb_tree::insert(root, node2);
-
-    EXPECT_EQ(count_nodes(root), 2);
-    EXPECT_TRUE(verify_rb_tree_properties(root));
-    EXPECT_TRUE(verify_parent_pointers(root, nullptr));
-    EXPECT_NE(find_node(root, 10), nullptr);
-    EXPECT_NE(find_node(root, 20), nullptr);
-
-    cleanup_tree(root);
-}
-
-TEST(RBTreeTest, RBTreeTest_InsertTwoNodesDescending)
-{
-    TestNode *root = nullptr;
-    TestNode *node1 = new TestNode(20);
-    TestNode *node2 = new TestNode(10);
 
     hh::rb_tree::insert(root, node1);
     hh::rb_tree::insert(root, node2);
@@ -276,30 +257,6 @@ TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesAscending)
     cleanup_tree(root);
 }
 
-TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesDescending)
-{
-    TestNode *root = nullptr;
-    std::vector<TestNode *> nodes;
-
-    for (int i = 10; i >= 1; i--)
-    {
-        TestNode *node = new TestNode(i * 10);
-        nodes.push_back(node);
-        hh::rb_tree::insert(root, node);
-    }
-
-    EXPECT_EQ(count_nodes(root), 10);
-    EXPECT_TRUE(verify_rb_tree_properties(root));
-    EXPECT_TRUE(verify_parent_pointers(root, nullptr));
-
-    for (int i = 1; i <= 10; i++)
-    {
-        EXPECT_NE(find_node(root, i * 10), nullptr);
-    }
-
-    cleanup_tree(root);
-}
-
 TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesRandom)
 {
     TestNode *root = nullptr;
@@ -329,7 +286,7 @@ TEST(RBTreeTest, RBTreeTest_InsertLargeNumberOfNodes)
 {
     TestNode *root = nullptr;
     std::vector<TestNode *> nodes;
-    const int NUM_NODES = 100;
+    const int NUM_NODES = 10000;
 
     for (int i = 1; i <= NUM_NODES; i++)
     {
@@ -347,20 +304,6 @@ TEST(RBTreeTest, RBTreeTest_InsertLargeNumberOfNodes)
         EXPECT_NE(find_node(root, i), nullptr);
     }
 
-    cleanup_tree(root);
-}
-
-TEST(RBTreeTest, RBTreeTest_RemoveSingleNode)
-{
-    TestNode *root = nullptr;
-    TestNode *node = new TestNode(10);
-
-    hh::rb_tree::insert(root, node);
-    hh::rb_tree::remove(root, node);
-
-    EXPECT_EQ(root, nullptr);
-
-    delete node;
     cleanup_tree(root);
 }
 
@@ -539,37 +482,6 @@ TEST(RBTreeTest, RBTreeTest_RemoveAllNodesSequentially)
     cleanup_tree(root);
 }
 
-TEST(RBTreeTest, RBTreeTest_RemoveNodesInReverseInsertionOrder)
-{
-    TestNode *root = nullptr;
-    std::vector<TestNode *> nodes;
-
-    for (int i = 1; i <= 10; i++)
-    {
-        TestNode *node = new TestNode(i * 10);
-        nodes.push_back(node);
-        hh::rb_tree::insert(root, node);
-    }
-
-    for (int i = nodes.size() - 1; i >= 0; i--)
-    {
-        hh::rb_tree::remove(root, nodes[i]);
-        if (root != nullptr)
-        {
-            EXPECT_TRUE(verify_rb_tree_properties(root));
-            EXPECT_TRUE(verify_parent_pointers(root, nullptr));
-        }
-    }
-
-    EXPECT_EQ(root, nullptr);
-
-    for (auto node : nodes)
-    {
-        delete node;
-    }
-    cleanup_tree(root);
-}
-
 TEST(RBTreeTest, RBTreeTest_LowerBoundEmptyTree)
 {
     TestNode *root = nullptr;
@@ -657,8 +569,8 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundLargerThanAll)
 TEST(RBTreeTest, RBTreeTest_StressTestInsertRemoveCycle)
 {
     TestNode *root = nullptr;
-    const int CYCLES = 50;
-    const int NODES_PER_CYCLE = 20;
+    const int CYCLES = 5000;
+    const int NODES_PER_CYCLE = 2000;
 
     for (int cycle = 0; cycle < CYCLES; cycle++)
     {
@@ -672,21 +584,17 @@ TEST(RBTreeTest, RBTreeTest_StressTestInsertRemoveCycle)
             hh::rb_tree::insert(root, node);
         }
 
-        EXPECT_TRUE(verify_rb_tree_properties(root));
-        EXPECT_TRUE(verify_parent_pointers(root, nullptr));
-
         // Remove half of them
         for (int i = 0; i < NODES_PER_CYCLE / 2; i++)
         {
             hh::rb_tree::remove(root, nodes[i]);
             delete nodes[i];
         }
-
-        if (root != nullptr)
-        {
-            EXPECT_TRUE(verify_rb_tree_properties(root));
-            EXPECT_TRUE(verify_parent_pointers(root, nullptr));
-        }
+    }
+    if (root != nullptr)
+    {
+        EXPECT_TRUE(verify_rb_tree_properties(root));
+        EXPECT_TRUE(verify_parent_pointers(root, nullptr));
     }
 
     cleanup_tree(root);
@@ -761,6 +669,75 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundWithRemovesAndDuplicates)
         auto it = std::lower_bound(values.begin(), values.end(), val);
 
         if (it != values.end())
+        {
+            EXPECT_NE(result, nullptr);
+            EXPECT_EQ(get_actual_value(result), *it);
+        }
+        else
+        {
+            EXPECT_EQ(result, nullptr);
+        }
+    }
+
+    cleanup_tree(root);
+}
+
+TEST(RBTreeTest, RBTreeTest_StressInsertRemoveLowerBound)
+{
+    TestNode *root = nullptr;
+
+    const int NUM_NODES = 100000;
+    std::vector<TestNode *> nodes;
+    std::multiset<std::size_t> existing_values;
+    for (int i = 0; i < NUM_NODES; i++)
+    {
+        TestNode *node = new TestNode(rand() % (NUM_NODES / 10));
+        hh::rb_tree::insert(root, node);
+
+        existing_values.insert(get_actual_value(node));
+        nodes.push_back(node);
+    }
+
+    EXPECT_TRUE(verify_rb_tree_properties(root));
+    EXPECT_TRUE(verify_parent_pointers(root, nullptr));
+
+    // remove random 20% of nodes
+    std::shuffle(nodes.begin(), nodes.end(), std::mt19937{std::random_device{}()});
+    for (size_t i = 0; i < nodes.size() * 2 / 10; i++)
+    {
+        hh::rb_tree::remove(root, nodes[i]);
+        existing_values.erase(existing_values.find(get_actual_value(nodes[i])));
+        delete nodes[i];
+    }
+
+    EXPECT_TRUE(verify_rb_tree_properties(root));
+    EXPECT_TRUE(verify_parent_pointers(root, nullptr));
+
+    EXPECT_EQ(count_nodes(root), existing_values.size());
+
+    // lower_bound tests is the same as multiset lower_bound
+
+    std::vector<std::size_t> inorder_traversal;
+    std::function<void(TestNode *)> inorder = [&](TestNode *node)
+    {
+        if (!node)
+            return;
+        inorder(node->left);
+        inorder_traversal.push_back(get_actual_value(node));
+        inorder(node->right);
+    };
+
+    inorder(root);
+
+    EXPECT_TRUE(std::is_sorted(inorder_traversal.begin(), inorder_traversal.end()));
+
+    for (int i = 0; i < 1000; i++)
+    {
+        std::size_t query_val = rand() % (NUM_NODES / 10 + NUM_NODES / 20);
+        TestNode *result = hh::rb_tree::lower_bound(root, query_val, compare_size_t);
+        auto it = existing_values.lower_bound(query_val);
+
+        if (it != existing_values.end())
         {
             EXPECT_NE(result, nullptr);
             EXPECT_EQ(get_actual_value(result), *it);

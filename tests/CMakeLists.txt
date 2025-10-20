@@ -4,13 +4,14 @@ cmake_minimum_required(VERSION 3.10)
 add_executable(allocator_tests
     test_basic_alloc.cpp
     test_rb_tree.cpp
+    test_halloc_Block.cpp
 )
 
 # Link against gtest
 target_link_libraries(allocator_tests
     
     basic_alloc
-    rb_tree
+    halloc
     GTest::gtest_main
 )
 
