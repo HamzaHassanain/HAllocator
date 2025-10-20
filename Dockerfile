@@ -13,4 +13,4 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
-RUN chmod +x ./scripts.sh
+RUN chmod +x ./scripts.sh && ./scripts.sh

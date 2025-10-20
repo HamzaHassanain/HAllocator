@@ -17,11 +17,6 @@ target_link_libraries(allocator_tests
     GTest::gtest_main
 )
 
-# Include directories
-target_include_directories(allocator_tests PRIVATE
-    ${PROJECT_SOURCE_DIR}/basic-allocator
-)
-
 # Discover tests
 include(GoogleTest)
 gtest_discover_tests(allocator_tests)

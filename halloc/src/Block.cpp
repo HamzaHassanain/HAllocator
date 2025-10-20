@@ -1,7 +1,9 @@
 /**
- * @file Block.ipp
+ * @file Block.cpp
  * @brief Implementation of Block memory allocator
  */
+
+#include "../includes/Block.hpp"
 
 #include <sys/mman.h>
 
@@ -9,34 +11,33 @@
 #include <cstddef>
 #include <fstream>
 
-#include "../includes/Block.hpp"
 #include "../includes/RBTreeDriver.hpp"
 
 namespace hh::halloc {
 
-inline std::size_t Block::get_actual_value(std::size_t value) {
+std::size_t Block::get_actual_value(std::size_t value) {
     // Clear bits 62-63 (status and color), keep bits 0-61 (size)
     return value & ~(3ull << 62);
 }
 
-inline void Block::mark_as_used(std::size_t& value) {
+void Block::mark_as_used(std::size_t& value) {
     // Set bit 62 to indicate allocated/used
     value |= (1ull << 62);
 }
 
-inline void Block::mark_as_free(std::size_t& value) {
+void Block::mark_as_free(std::size_t& value) {
     // Clear bit 62 to indicate free
     value &= ~(1ull << 62);
 }
 
-inline bool Block::is_free(const std::size_t& value) {
+bool Block::is_free(const std::size_t& value) {
     // Check if bit 62 is clear (free)
     return !(value & (1ull << 62));
 }
 
-inline Block::Block() : size(0), head(nullptr), rb_tree() {}
+Block::Block() : size(0), head(nullptr), rb_tree() {}
 
-inline Block::Block(std::size_t bytes) {
+Block::Block(std::size_t bytes) {
     size = bytes;
     head = (MemoryNode*)REQUEST_MEMORY_VIA_MMAP(bytes);
 
@@ -62,13 +63,13 @@ inline Block::Block(std::size_t bytes) {
     rb_tree = RBTreeDriver<MemoryNode>{head};
 }
 
-inline Block::Block(Block&& other)
+Block::Block(Block&& other)
     : size(other.size), head(other.head), rb_tree(std::move(other.rb_tree)) {
     other.head = nullptr;
     other.size = 0;
 }
 
-inline Block& Block::operator=(Block&& other) {
+Block& Block::operator=(Block&& other) {
     if (this != &other) {
         head = other.head;
         size = other.size;
@@ -80,7 +81,7 @@ inline Block& Block::operator=(Block&& other) {
     return *this;
 }
 
-inline MemoryNode* Block::best_fit(std::size_t bytes) {
+MemoryNode* Block::best_fit(std::size_t bytes) {
     // Find smallest free node >= bytes using RB-tree
     MemoryNode* node =
         rb_tree.lower_bound(bytes, [](std::size_t a, std::size_t b) { return (a) <= (b); });
@@ -106,7 +107,7 @@ inline MemoryNode* Block::best_fit(std::size_t bytes) {
  * @post is_free(node->value) == false (node marked as used)
  * @post If node was split, a new free node exists in RB-tree
  */
-inline void* Block::allocate(std::size_t bytes, MemoryNode* node) {
+void* Block::allocate(std::size_t bytes, MemoryNode* node) {
     // Calculate pointer to usable memory (skip metadata)
     void* actual_mem = (void*)((char*)node + MEMORY_NODE_SIZE);
 
@@ -140,7 +141,7 @@ inline void* Block::allocate(std::size_t bytes, MemoryNode* node) {
  * @post Node is inserted into RB-tree (possibly merged with neighbors)
  * @post Adjacent free blocks are coalesced if possible
  */
-inline void Block::deallocate(void* ptr, [[maybe_unused]] std::size_t bytes) {
+void Block::deallocate(void* ptr, [[maybe_unused]] std::size_t bytes) {
     MemoryNode* node = (MemoryNode*)((char*)ptr - MEMORY_NODE_SIZE);
 
     mark_as_free(node->value);
@@ -176,7 +177,7 @@ inline void Block::deallocate(void* ptr, [[maybe_unused]] std::size_t bytes) {
  *
  * @note Minimum split size: MEMORY_NODE_SIZE + 1 (metadata + at least 1 byte)
  */
-inline void Block::shrink_then_align(MemoryNode* node, std::size_t bytes) {
+void Block::shrink_then_align(MemoryNode* node, std::size_t bytes) {
     std::size_t node_size = get_actual_value(node->value);
 
     // Split only if remainder is large enough for a new node
@@ -243,7 +244,7 @@ inline void Block::shrink_then_align(MemoryNode* node, std::size_t bytes) {
  * @post Adjacent free blocks are merged if they existed
  * @post Linked list is updated to reflect any merges
  */
-inline void Block::coalesce_nodes(MemoryNode* node) {
+void Block::coalesce_nodes(MemoryNode* node) {
     // Forward merge: merge with next node if it's free
     if (node->next && is_free(node->next->value)) {
         MemoryNode* next_node = node->next;
@@ -298,7 +299,7 @@ inline void Block::coalesce_nodes(MemoryNode* node) {
  * @post All memory in this Block is returned to OS
  * @post head pointer is invalid after this call
  */
-inline Block::~Block() {
+Block::~Block() {
     if (head) {
         RELEASE_MEMORY_VIA_MUNMAP(head, size);
     }
