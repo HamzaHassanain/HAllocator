@@ -142,7 +142,7 @@ namespace hh::halloc
          * @post Merged node is inserted into RB-tree
          * @post Doubly-linked list is updated
          */
-        void try_merge(MemoryNode *node);
+        void coalesce_nodes(MemoryNode *node);
 
     public:
         /**

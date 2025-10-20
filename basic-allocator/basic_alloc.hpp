@@ -138,7 +138,7 @@ namespace hh::basic_alloc
      * @pre is_free(nd->size) == true
      * @post Adjacent free blocks are coalesced
      */
-    void try_merge(mem_node *nd);
+    void coalesce_nodes(mem_node *nd);
 
     /**
      * @brief Free a previously allocated memory block.

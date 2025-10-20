@@ -133,7 +133,7 @@ namespace hh::basic_alloc
      * @pre nd is marked as free
      * @post Adjacent free blocks are merged
      */
-    void try_merge(mem_node *nd)
+    void coalesce_nodes(mem_node *nd)
     {
         if (!nd)
             return;
@@ -194,7 +194,7 @@ namespace hh::basic_alloc
         make_free(nd->size);
 
         // Attempt to merge with adjacent free blocks
-        try_merge(nd);
+        coalesce_nodes(nd);
         return nullptr;
     }
 
@@ -240,7 +240,7 @@ namespace hh::basic_alloc
             if (__tail == nd)
                 __tail = new_node;
             else
-                try_merge(new_node); // Merge with next if possible
+                coalesce_nodes(new_node); // Merge with next if possible
         }
 
         if (__tail)

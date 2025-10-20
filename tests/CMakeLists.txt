@@ -5,6 +5,7 @@ add_executable(allocator_tests
     test_basic_alloc.cpp
     test_rb_tree.cpp
     test_halloc_Block.cpp
+    test_halloc.BlocksContainer.cpp
 )
 
 # Link against gtest

@@ -13,33 +13,33 @@
 namespace hh::halloc
 {
 
-    std::size_t Block::get_actual_value(std::size_t value)
+    inline std::size_t Block::get_actual_value(std::size_t value)
     {
         // Clear bits 62-63 (status and color), keep bits 0-61 (size)
         return value & ~(3ull << 62);
     }
 
-    void Block::mark_as_used(std::size_t &value)
+    inline void Block::mark_as_used(std::size_t &value)
     {
         // Set bit 62 to indicate allocated/used
         value |= (1ull << 62);
     }
 
-    void Block::mark_as_free(std::size_t &value)
+    inline void Block::mark_as_free(std::size_t &value)
     {
         // Clear bit 62 to indicate free
         value &= ~(1ull << 62);
     }
 
-    bool Block::is_free(const std::size_t &value)
+    inline bool Block::is_free(const std::size_t &value)
     {
         // Check if bit 62 is clear (free)
         return !(value & (1ull << 62));
     }
 
-    Block::Block() : size(0), head(nullptr), rb_tree() {}
+    inline Block::Block() : size(0), head(nullptr), rb_tree() {}
 
-    Block::Block(std::size_t bytes)
+    inline Block::Block(std::size_t bytes)
     {
         size = bytes;
         head = (MemoryNode *)REQUEST_MEMORY_VIA_MMAP(bytes);
@@ -67,14 +67,14 @@ namespace hh::halloc
         rb_tree = std::move(RBTreeDriver<MemoryNode>(head));
     }
 
-    Block::Block(Block &&other)
+    inline Block::Block(Block &&other)
         : size(other.size), head(other.head), rb_tree(std::move(other.rb_tree))
     {
         other.head = nullptr;
         other.size = 0;
     }
 
-    Block &Block::operator=(Block &&other)
+    inline Block &Block::operator=(Block &&other)
     {
         if (this != &other)
         {
@@ -88,7 +88,7 @@ namespace hh::halloc
         return *this;
     }
 
-    MemoryNode *Block::best_fit(std::size_t bytes)
+    inline MemoryNode *Block::best_fit(std::size_t bytes)
     {
         // Find smallest free node >= bytes using RB-tree
         MemoryNode *node = rb_tree.lower_bound(bytes, [](std::size_t a, std::size_t b)
@@ -115,7 +115,7 @@ namespace hh::halloc
      * @post is_free(node->value) == false (node marked as used)
      * @post If node was split, a new free node exists in RB-tree
      */
-    void *Block::allocate(std::size_t bytes, MemoryNode *node)
+    inline void *Block::allocate(std::size_t bytes, MemoryNode *node)
     {
         // Calculate pointer to usable memory (skip metadata)
         void *actual_mem = (void *)((char *)node + MEMORY_NODE_SIZE);
@@ -150,16 +150,14 @@ namespace hh::halloc
      * @post Node is inserted into RB-tree (possibly merged with neighbors)
      * @post Adjacent free blocks are coalesced if possible
      */
-    void Block::deallocate(void *ptr, [[maybe_unused]] std::size_t bytes)
+    inline void Block::deallocate(void *ptr, [[maybe_unused]] std::size_t bytes)
     {
-        // Get node pointer from user pointer
         MemoryNode *node = (MemoryNode *)((char *)ptr - MEMORY_NODE_SIZE);
 
-        // Mark as free
         mark_as_free(node->value);
 
         // Merge with adjacent free blocks and insert into RB-tree
-        try_merge(node);
+        coalesce_nodes(node);
     }
 
     /**
@@ -189,7 +187,7 @@ namespace hh::halloc
      *
      * @note Minimum split size: MEMORY_NODE_SIZE + 1 (metadata + at least 1 byte)
      */
-    void Block::shrink_then_align(MemoryNode *node, std::size_t bytes)
+    inline void Block::shrink_then_align(MemoryNode *node, std::size_t bytes)
     {
         std::size_t node_size = get_actual_value(node->value);
 
@@ -258,23 +256,20 @@ namespace hh::halloc
      * @post node (or merged node) is inserted into RB-tree
      * @post Adjacent free blocks are merged if they existed
      * @post Linked list is updated to reflect any merges
-     *
-     * @note CRITICAL: RB-tree removal must happen BEFORE modifying node->value
-     *       because the tree uses value for comparisons during traversal
      */
-    void Block::try_merge(MemoryNode *node)
+    inline void Block::coalesce_nodes(MemoryNode *node)
     {
         // Forward merge: merge with next node if it's free
         if (node->next && is_free(node->next->value))
         {
             MemoryNode *next_node = node->next;
 
-            // Remove next node from RB-tree BEFORE modifying
             rb_tree.remove(next_node);
 
-            // Combine sizes
             node->value = get_actual_value(node->value) +
                           get_actual_value(next_node->value) + MEMORY_NODE_SIZE;
+
+            mark_as_free(node->value);
 
             // Update linked list
             node->next = next_node->next;
@@ -290,12 +285,12 @@ namespace hh::halloc
         {
             MemoryNode *prev_node = node->prev;
 
-            // Remove previous node from RB-tree BEFORE modifying
             rb_tree.remove(prev_node);
 
-            // Combine sizes
             prev_node->value = get_actual_value(prev_node->value) +
                                get_actual_value(node->value) + MEMORY_NODE_SIZE;
+
+            mark_as_free(prev_node->value);
 
             // Update linked list
             prev_node->next = node->next;
@@ -322,7 +317,7 @@ namespace hh::halloc
      * @post All memory in this Block is returned to OS
      * @post head pointer is invalid after this call
      */
-    Block::~Block()
+    inline Block::~Block()
     {
         if (head)
         {

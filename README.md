@@ -1,4 +1,1 @@
-# Simple C++ Smart Pointer (shared_ptr)
-
-
-
+# A Simple C++ Allocator

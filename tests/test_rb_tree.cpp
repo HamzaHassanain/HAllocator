@@ -1,3 +1,23 @@
+/**
+ * @file test_rb_tree.cpp
+ * @brief Unit tests for Red-Black Tree implementation
+ *
+ * Test Coverage:
+ * - Insertion Tests (6 tests): Single node, ascending, rotations, random order, large scale (10K nodes)
+ * - Removal Tests (6 tests): Leaf, one child, two children, root, cycles, sequential removal
+ * - Lower Bound Tests (5 tests): Empty tree, exact match, no match, boundary cases, with duplicates
+ * - Stress Tests (3 tests): 5K cycles, duplicates handling, 100K random insert/remove/search
+ *
+ * Total: 20 tests
+ *
+ * Verifies RB-Tree Properties:
+ * - Root is black
+ * - No consecutive red nodes
+ * - Equal black height on all paths
+ * - BST ordering maintained
+ * - Parent pointers correct
+ */
+
 #include <gtest/gtest.h>
 #include "../rb-tree/rb-tree.hpp"
 #include <vector>
@@ -177,6 +197,9 @@ protected:
     }
 };
 
+/**
+ * @test Single node insertion creates black root with correct properties
+ */
 TEST(RBTreeTest, RBTreeTest_InsertSingleNode)
 {
     TestNode *root = nullptr;
@@ -194,6 +217,9 @@ TEST(RBTreeTest, RBTreeTest_InsertSingleNode)
     cleanup_tree(root);
 }
 
+/**
+ * @test Two ascending nodes maintain RB-tree properties and BST order
+ */
 TEST(RBTreeTest, RBTreeTest_InsertTwoNodesAscending)
 {
     TestNode *root = nullptr;
@@ -212,6 +238,9 @@ TEST(RBTreeTest, RBTreeTest_InsertTwoNodesAscending)
     cleanup_tree(root);
 }
 
+/**
+ * @test Three ascending nodes trigger rotation and recoloring to maintain balance
+ */
 TEST(RBTreeTest, RBTreeTest_InsertThreeNodesTriggersRotation)
 {
     TestNode *root = nullptr;
@@ -233,6 +262,9 @@ TEST(RBTreeTest, RBTreeTest_InsertThreeNodesTriggersRotation)
     cleanup_tree(root);
 }
 
+/**
+ * @test Ten ascending nodes verify balancing across multiple rotations
+ */
 TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesAscending)
 {
     TestNode *root = nullptr;
@@ -257,6 +289,9 @@ TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesAscending)
     cleanup_tree(root);
 }
 
+/**
+ * @test Random insertion order maintains all RB-tree properties
+ */
 TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesRandom)
 {
     TestNode *root = nullptr;
@@ -282,6 +317,9 @@ TEST(RBTreeTest, RBTreeTest_InsertMultipleNodesRandom)
     cleanup_tree(root);
 }
 
+/**
+ * @test 10,000 sequential insertions verify scalability and tree depth balancing
+ */
 TEST(RBTreeTest, RBTreeTest_InsertLargeNumberOfNodes)
 {
     TestNode *root = nullptr;
@@ -307,6 +345,9 @@ TEST(RBTreeTest, RBTreeTest_InsertLargeNumberOfNodes)
     cleanup_tree(root);
 }
 
+/**
+ * @test Leaf node removal maintains tree structure and RB properties
+ */
 TEST(RBTreeTest, RemoveLeafNode)
 {
     TestNode *root = nullptr;
@@ -331,6 +372,9 @@ TEST(RBTreeTest, RemoveLeafNode)
     delete node2;
 }
 
+/**
+ * @test Node with one child removal properly promotes child and maintains balance
+ */
 TEST(RBTreeTest, RBTreeTest_RemoveNodeWithOneChild)
 {
     TestNode *root = nullptr;
@@ -356,6 +400,9 @@ TEST(RBTreeTest, RBTreeTest_RemoveNodeWithOneChild)
     delete node3;
 }
 
+/**
+ * @test Node with two children removal uses successor replacement and maintains BST order
+ */
 TEST(RBTreeTest, RBTreeTest_RemoveNodeWithTwoChildren)
 {
     TestNode *root = nullptr;
@@ -384,6 +431,9 @@ TEST(RBTreeTest, RBTreeTest_RemoveNodeWithTwoChildren)
     delete node3;
 }
 
+/**
+ * @test Root node removal updates root pointer and maintains tree properties
+ */
 TEST(RBTreeTest, RBTreeTest_RemoveRootNode)
 {
     TestNode *root = nullptr;
@@ -406,6 +456,9 @@ TEST(RBTreeTest, RBTreeTest_RemoveRootNode)
     delete node1;
 }
 
+/**
+ * @test Alternating remove and reinsert operations maintain correctness through cycles
+ */
 TEST(RBTreeTest, RBTreeTest_RemoveAndReinsertNodes)
 {
     TestNode *root = nullptr;
@@ -451,6 +504,9 @@ TEST(RBTreeTest, RBTreeTest_RemoveAndReinsertNodes)
     cleanup_tree(root);
 }
 
+/**
+ * @test Sequential removal of all nodes leaves empty tree and maintains properties during removal
+ */
 TEST(RBTreeTest, RBTreeTest_RemoveAllNodesSequentially)
 {
     TestNode *root = nullptr;
@@ -482,6 +538,9 @@ TEST(RBTreeTest, RBTreeTest_RemoveAllNodesSequentially)
     cleanup_tree(root);
 }
 
+/**
+ * @test Lower bound on empty tree returns nullptr without crashing
+ */
 TEST(RBTreeTest, RBTreeTest_LowerBoundEmptyTree)
 {
     TestNode *root = nullptr;
@@ -491,6 +550,9 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundEmptyTree)
     cleanup_tree(root);
 }
 
+/**
+ * @test Lower bound with exact match returns the matching node
+ */
 TEST(RBTreeTest, RBTreeTest_LowerBoundExactMatch)
 {
     TestNode *root = nullptr;
@@ -510,6 +572,9 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundExactMatch)
     cleanup_tree(root);
 }
 
+/**
+ * @test Lower bound without exact match returns next larger element
+ */
 TEST(RBTreeTest, RBTreeTest_LowerBoundNoExactMatch)
 {
     TestNode *root = nullptr;
@@ -529,6 +594,9 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundNoExactMatch)
     cleanup_tree(root);
 }
 
+/**
+ * @test Lower bound smaller than all values returns smallest element
+ */
 TEST(RBTreeTest, RBTreeTest_LowerBoundSmallerThanAll)
 {
     TestNode *root = nullptr;
@@ -548,6 +616,9 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundSmallerThanAll)
     cleanup_tree(root);
 }
 
+/**
+ * @test Lower bound larger than all values returns nullptr
+ */
 TEST(RBTreeTest, RBTreeTest_LowerBoundLargerThanAll)
 {
     TestNode *root = nullptr;
@@ -566,6 +637,9 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundLargerThanAll)
     cleanup_tree(root);
 }
 
+/**
+ * @test 5,000 insert/remove cycles with 2,000 nodes each verify long-term stability
+ */
 TEST(RBTreeTest, RBTreeTest_StressTestInsertRemoveCycle)
 {
     TestNode *root = nullptr;
@@ -600,6 +674,9 @@ TEST(RBTreeTest, RBTreeTest_StressTestInsertRemoveCycle)
     cleanup_tree(root);
 }
 
+/**
+ * @test Duplicate value insertions are handled correctly with proper tree properties
+ */
 TEST(RBTreeTest, RBTreeTest_InsertDuplicateValues)
 {
     TestNode *root = nullptr;
@@ -617,6 +694,10 @@ TEST(RBTreeTest, RBTreeTest_InsertDuplicateValues)
 
     cleanup_tree(root);
 }
+
+/**
+ * @test Lower bound with duplicates and removals matches std::lower_bound behavior
+ */
 TEST(RBTreeTest, RBTreeTest_LowerBoundWithRemovesAndDuplicates)
 {
     TestNode *root = nullptr;
@@ -682,6 +763,9 @@ TEST(RBTreeTest, RBTreeTest_LowerBoundWithRemovesAndDuplicates)
     cleanup_tree(root);
 }
 
+/**
+ * @test 100K random operations with lower_bound queries verify correctness against std::multiset
+ */
 TEST(RBTreeTest, RBTreeTest_StressInsertRemoveLowerBound)
 {
     TestNode *root = nullptr;

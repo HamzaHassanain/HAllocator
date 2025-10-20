@@ -1,3 +1,15 @@
+/**
+ * @file test_halloc_Block.cpp
+ * @brief Unit tests for Block single-block memory allocator with RB-tree
+ *
+ * Test Coverage:
+ * - Basic Allocation (5 tests): Full block, smaller sizes, arrays, structs, multiple allocations
+ * - Memory Management (2 tests): Block metadata verification, coalescing on deallocation
+ * - Stress Tests (3 tests): Random patterns (50K allocs), fragmentation, RB-tree depth
+ *
+ * Total: 9 tests
+ */
+
 #include <gtest/gtest.h>
 #include <vector>
 #include <cstring>
@@ -7,10 +19,15 @@
 #include "../halloc/includes/Block.hpp"
 
 using namespace hh::halloc;
-std::size_t get_actual_value(std::size_t value)
+
+namespace
 {
-    return value & ~(3ull << 62);
+    std::size_t get_actual_value(std::size_t value)
+    {
+        return value & ~(3ull << 62);
+    }
 }
+
 class HallocBlockTest : public ::testing::Test
 {
 protected:
@@ -33,6 +50,10 @@ void *allocate(Block &block, std::size_t size)
 
     return ptr1;
 }
+
+/**
+ * @test Allocating entire block size works, prevents further allocations, and allows reallocation after deallocation
+ */
 TEST(HallocBlockTest, BlockTest_AllocateTheSameSizeAsBlock)
 {
     Block block(1024);
@@ -59,6 +80,9 @@ TEST(HallocBlockTest, BlockTest_AllocateTheSameSizeAsBlock)
     EXPECT_EQ(node_after_second_allocation, nullptr);
 }
 
+/**
+ * @test Small allocations with splitting and coalescing verify block reuse efficiency
+ */
 TEST(HallocBlockTest, BlockTest_AllocateSmallerSizes)
 {
     // first 48 is for MEMORY_NODE_SIZE
@@ -90,6 +114,9 @@ TEST(HallocBlockTest, BlockTest_AllocateSmallerSizes)
     EXPECT_NE(ptr5, nullptr);
 }
 
+/**
+ * @test Integer array allocation with write/read verification ensures data integrity
+ */
 TEST(HallocBlockTest, BlockTest_AllocateAndUseINTArray)
 {
     const int ARRAY_SIZE = 10;
@@ -111,6 +138,9 @@ TEST(HallocBlockTest, BlockTest_AllocateAndUseINTArray)
     block.deallocate(int_array, ARRAY_SIZE * sizeof(int));
 }
 
+/**
+ * @test Custom struct with nested allocation verifies complex object support and best-fit behavior
+ */
 TEST(HallocBlockTest, BlockTest_AllocateAndUseCustomStruct)
 {
 
@@ -150,6 +180,9 @@ TEST(HallocBlockTest, BlockTest_AllocateAndUseCustomStruct)
     block.deallocate(cs_ptr->data, 11);
 }
 
+/**
+ * @test Sequential allocations of varying sizes verify metadata tracking and size correctness
+ */
 TEST(HallocBlockTest, BlockTest_MultipleAllocations)
 {
     Block block(2048);
@@ -168,6 +201,9 @@ TEST(HallocBlockTest, BlockTest_MultipleAllocations)
     }
 }
 
+/**
+ * @test Deallocations create merged free blocks enabling larger allocations (coalescing verification)
+ */
 TEST(HallocBlockTest, BlockTest_MultipleAllocationsWithDeletionsMustMerge)
 {
     Block block(1311);
@@ -189,6 +225,9 @@ TEST(HallocBlockTest, BlockTest_MultipleAllocationsWithDeletionsMustMerge)
     EXPECT_EQ(ptr2, nullptr);
 }
 
+/**
+ * @test 50K random allocations with 60% deallocation followed by 10K reallocations tests memory reuse
+ */
 TEST(HallocBlockTest, StressTest_RandomAllocationsAndDeallocations)
 {
     Block block(512 * 1024 * 1024); // 512MB block
@@ -246,6 +285,9 @@ TEST(HallocBlockTest, StressTest_RandomAllocationsAndDeallocations)
     }
 }
 
+/**
+ * @test Alternating allocation/deallocation patterns verify coalescing under heavy fragmentation (10K+ allocs)
+ */
 TEST(HallocBlockTest, StressTest_FragmentationAndCoalescing)
 {
     Block block(1024 * 1024 * 1024);
@@ -320,6 +362,9 @@ TEST(HallocBlockTest, StressTest_FragmentationAndCoalescing)
     }
 }
 
+/**
+ * @test Exponentially increasing sizes (1KB to GB) with random deallocation stresses RB-tree balancing (100K+ ops)
+ */
 TEST(HallocBlockTest, StressTest_WorstCaseRBTreeDepth)
 {
     Block block(2ULL * 1024 * 1024 * 1024); // 2GB block

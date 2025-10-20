@@ -11,6 +11,20 @@
 namespace hh::halloc
 {
     /**
+     * @brief Helper function to extract actual size from encoded value.
+     *
+     * Removes the color and status bits (bits 62-63) from the encoded value
+     * to get the actual size in bytes.
+     *
+     * @param value Encoded value with color and status bits
+     * @return Actual size in bytes (bits 0-61)
+     */
+    inline std::size_t get_actual_value(std::size_t value)
+    {
+        return value & ~(3ull << 62);
+    }
+
+    /**
      * @brief Finds the best-fit free node across all initialized blocks.
      *
      * Iterates through all created blocks (0 to current_block_index) and finds
@@ -99,6 +113,11 @@ namespace hh::halloc
     template <std::size_t BlockSize, int MaxNumBlocks>
     void *BlocksContainer<BlockSize, MaxNumBlocks>::allocate(std::size_t bytes)
     {
+        if (bytes < 1)
+        {
+            throw std::invalid_argument("Bytes must be positive");
+        }
+
         auto [index, node] = best_fit(bytes);
 
         // No suitable node found in existing blocks
@@ -117,6 +136,12 @@ namespace hh::halloc
                 // No space for new block
                 return nullptr;
             }
+        }
+
+        // Guard Allocation Against Not Enough Memory
+        if (!node)
+        {
+            return nullptr;
         }
 
         // Allocate from the selected block
@@ -150,12 +175,17 @@ namespace hh::halloc
         // Find which block owns this pointer
         for (int i = 0; i <= current_block_index; i++)
         {
-            // Check if ptr is within block i's range
-            if (blocks[i].get_head() <= ptr && (i + 1 > current_block_index || blocks[i + 1].get_head() > ptr))
+            // Check if ptr is within block i's address range
+            void *block_start = blocks[i].get_head();
+            void *block_end = (char *)block_start + BlockSize;
+
+            if (block_start <= ptr && ptr < block_end)
             {
                 blocks[i].deallocate(ptr, bytes);
                 return;
             }
         }
+
+        throw std::invalid_argument("Pointer not allocated by this container");
     }
 };
