@@ -380,6 +380,8 @@ TEST(BlocksContainerTest, Fragmentation_CoalescingAfterDeallocation)
     container.deallocate(ptr2, 256);
     container.deallocate(ptr4, 256);
     container.deallocate(large_ptr, 512 + MEMORY_NODE_SIZE);
+
+    container.deallocate(ptr3, 256);
 }
 
 /**

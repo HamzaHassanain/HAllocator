@@ -3,12 +3,10 @@
  * @brief Unit tests for Red-Black Tree implementation
  *
  * Test Coverage:
- * - Insertion Tests (6 tests): Single node, ascending, rotations, random order, large scale (10K nodes)
- * - Removal Tests (6 tests): Leaf, one child, two children, root, cycles, sequential removal
- * - Lower Bound Tests (5 tests): Empty tree, exact match, no match, boundary cases, with duplicates
- * - Stress Tests (3 tests): 5K cycles, duplicates handling, 100K random insert/remove/search
- *
- * Total: 20 tests
+ * - Insertion Tests: Single node, ascending, rotations, random order, large scale (10K nodes)
+ * - Removal Tests : Leaf, one child, two children, root, cycles, sequential removal
+ * - Lower Bound Tests: Empty tree, exact match, no match, boundary cases, with duplicates
+ * - Stress Tests: 5K cycles, duplicates handling, 100K random insert/remove/search
  *
  * Verifies RB-Tree Properties:
  * - Root is black

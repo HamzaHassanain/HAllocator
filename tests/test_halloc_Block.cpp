@@ -3,11 +3,10 @@
  * @brief Unit tests for Block single-block memory allocator with RB-tree
  *
  * Test Coverage:
- * - Basic Allocation (5 tests): Full block, smaller sizes, arrays, structs, multiple allocations
- * - Memory Management (2 tests): Block metadata verification, coalescing on deallocation
- * - Stress Tests (3 tests): Random patterns (50K allocs), fragmentation, RB-tree depth
+ * - Basic Allocation : Full block, smaller sizes, arrays, structs, multiple allocations
+ * - Memory Management: Block metadata verification, coalescing on deallocation
+ * - Stress Tests : Random patterns (50K allocs), fragmentation, RB-tree depth
  *
- * Total: 9 tests
  */
 
 #include <gtest/gtest.h>

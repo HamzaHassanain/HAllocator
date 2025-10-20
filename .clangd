@@ -1,0 +1,36 @@
+CompileFlags:
+  Add:
+    - "-std=c++23"
+    - "-Wall"
+    - "-Wextra"
+    - "-pedantic"
+  CompilationDatabase: out
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      [
+        bugprone-*,
+        clang-analyzer-*,
+        cppcoreguidelines-*,
+        google-*,
+        modernize-*,
+        performance-*,
+        readability-*,
+      ]
+    Remove:
+      [
+        bugprone-easily-swappable-parameters,
+        cppcoreguidelines-avoid-magic-numbers,
+        readability-magic-numbers,
+        readability-identifier-length,
+        modernize-use-trailing-return-type,
+      ]
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+
+Hover:
+  ShowAKA: Yes

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target job to run (format-check, build-and-test, sanitizer-tests, lint)"
+        required: false
+        default: "all"
+
+#   push:
+#     branches: [master, main]
+#   pull_request:
+#     branches: [master, main]
+
+jobs:
+  format-check:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: ./build.sh format-check
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential clang clang-tidy
+
+      - name: Build
+        run: ./build.sh clean build
+
+      - name: Run tests
+        run: ./build.sh test
+
+  sanitizer-tests:
+    name: Sanitizer Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sanitizer: [address, undefined, leak]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential clang
+
+      - name: Build with ${{ matrix.sanitizer }} sanitizer
+        run: ./build.sh sanitize ${{ matrix.sanitizer }}
+
+      - name: Run tests
+        run: cd out && ctest --output-on-failure
+
+  lint:
+    name: Static Analysis (clang-tidy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential clang-tidy
+
+      - name: Run linter
+        run: ./build.sh lint

@@ -2,16 +2,59 @@ cmake_minimum_required(VERSION 3.10)
 project(hh_alloc)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # For clang-tidy
 
+# Default build flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -g -O0")
 
+# ==================== SANITIZERS ====================
+# Usage: cmake -DSANITIZER=address ..
+#        cmake -DSANITIZER=thread ..
+#        cmake -DSANITIZER=undefined ..
+#        cmake -DSANITIZER=memory ..
 
+set(SANITIZER "" CACHE STRING "Sanitizer to enable (address, thread, undefined, memory, leak)")
+
+if(SANITIZER)
+    message(STATUS "Enabling ${SANITIZER} sanitizer")
+    
+    if(SANITIZER STREQUAL "address")
+        set(SANITIZER_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
+    elseif(SANITIZER STREQUAL "thread")
+        set(SANITIZER_FLAGS "-fsanitize=thread")
+    elseif(SANITIZER STREQUAL "undefined")
+        set(SANITIZER_FLAGS "-fsanitize=undefined -fno-sanitize-recover=all")
+    elseif(SANITIZER STREQUAL "memory")
+        set(SANITIZER_FLAGS "-fsanitize=memory -fno-omit-frame-pointer")
+    elseif(SANITIZER STREQUAL "leak")
+        set(SANITIZER_FLAGS "-fsanitize=leak")
+    else()
+        message(FATAL_ERROR "Unknown sanitizer: ${SANITIZER}")
+    endif()
+    
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+endif()
+
+# ==================== CLANG-TIDY ====================
+# Enable with: cmake -DENABLE_CLANG_TIDY=ON ..
+
+option(ENABLE_CLANG_TIDY "Enable clang-tidy checks" OFF)
+
+if(ENABLE_CLANG_TIDY)
+    find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+    if(CLANG_TIDY_EXE)
+        message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-header-filter=.*")
+    else()
+        message(WARNING "clang-tidy not found!")
+    endif()
+endif()
 
 
 add_subdirectory(basic-allocator)
 add_subdirectory(rb-tree)
 add_subdirectory(halloc)
-# add_subdirectory(smart-allocator)
 
 enable_testing()
 
@@ -25,10 +68,6 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-
-add_executable(hh_alloc app.cpp)
-
-target_link_libraries(hh_alloc PRIVATE rb_tree )
 
 add_subdirectory(tests)
 
