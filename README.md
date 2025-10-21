@@ -1,4 +1,24 @@
-# A Simple C++ Allocator
+<div align="center">
+  <img src="icon.jpg" alt="HAllocator Logo" width="120"/>
+  
+  # HAllocator
+  
+  ### A Modern C++ Memory Allocator
+  
+  [![CMake](https://img.shields.io/badge/CMake-3.10+-064F8C?style=for-the-badge&logo=cmake&logoColor=white)](https://cmake.org/)
+  [![C++](https://img.shields.io/badge/C++-23-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](https://isocpp.org/)
+  [![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge)](LICENSE)
+  [![Build Status](https://img.shields.io/badge/build-passing-success?style=for-the-badge)](https://github.com/HamzaHassanain/HAllocator)
+  
+  [![GoogleTest](https://img.shields.io/badge/Tested_with-GoogleTest-green?style=for-the-badge&logo=google&logoColor=white)](https://github.com/google/googletest)
+  [![Clang](https://img.shields.io/badge/Clang-Compatible-262D3A?style=for-the-badge&logo=llvm&logoColor=white)](https://clang.llvm.org/)
+  [![Documentation](https://img.shields.io/badge/docs-Doxygen-2C4AA8?style=for-the-badge&logo=readthedocs&logoColor=white)](https://hamzahassanain.github.io/HAllocator/)
+  
+  **Red-Black Tree • Best-Fit Search • Memory Coalescing**
+  
+</div>
+
+---
 
 ## Contents
 
@@ -7,7 +27,6 @@
 - [Setup](#setup)
 - [Quick usage](#quick-usage)
 - [Repository layout](#repository-layout)
-- [Documentation](#documentation)
 
 ## Overview
 
@@ -167,10 +186,6 @@ for(int i = 0; i < 100; ++i) {
 - `tests/` — GoogleTest unit tests
 - `CMakeLists.txt` — top-level build configuration
 - `scripts.sh` — helper script for build/test/lint/format/sanitizers
-
-## Documentation
-
-Full API documentation is available online at [https://hamzahassanain.github.io/memory-allocator-and-smart-ptr/](https://hamzahassanain.github.io/memory-allocator-and-smart-ptr/)
 
 ### Building Documentation Locally
 

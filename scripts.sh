@@ -57,6 +57,7 @@ if [ "$1" = "build" ] || [ -z "$1" ]; then
     cd ..
     
     echo "Build completed successfully!"
+    shift
 fi
 
 

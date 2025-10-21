@@ -126,9 +126,12 @@ CTestTestfile.cmake
 DartConfiguration.tcl
 
 # Documentation
+html/
+latex/
 docs/html/
 docs/latex/
 Doxyfile.bak
+Doxyfile.backup
 
 # Temporary files
 *~
