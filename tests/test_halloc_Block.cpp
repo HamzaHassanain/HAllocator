@@ -53,7 +53,7 @@ void *allocate(Block &block, std::size_t size)
 /**
  * @test Allocating entire block size works, prevents further allocations, and allows reallocation after deallocation
  */
-TEST(HallocBlockTest, BlockTest_AllocateTheSameSizeAsBlock)
+TEST(HallocBlockTest, SMALL_AllocateTheSameSizeAsBlock)
 {
     Block block(1024);
 
@@ -82,7 +82,7 @@ TEST(HallocBlockTest, BlockTest_AllocateTheSameSizeAsBlock)
 /**
  * @test Small allocations with splitting and coalescing verify block reuse efficiency
  */
-TEST(HallocBlockTest, BlockTest_AllocateSmallerSizes)
+TEST(HallocBlockTest, SMALL_AllocateSmallerSizes)
 {
     // first 48 is for MEMORY_NODE_SIZE
     Block block(100);
@@ -116,7 +116,7 @@ TEST(HallocBlockTest, BlockTest_AllocateSmallerSizes)
 /**
  * @test Integer array allocation with write/read verification ensures data integrity
  */
-TEST(HallocBlockTest, BlockTest_AllocateAndUseINTArray)
+TEST(HallocBlockTest, SMALL_AllocateAndUseINTArray)
 {
     const int ARRAY_SIZE = 10;
     Block block(10 * sizeof(int) + MEMORY_NODE_SIZE);
@@ -140,7 +140,7 @@ TEST(HallocBlockTest, BlockTest_AllocateAndUseINTArray)
 /**
  * @test Custom struct with nested allocation verifies complex object support and best-fit behavior
  */
-TEST(HallocBlockTest, BlockTest_AllocateAndUseCustomStruct)
+TEST(HallocBlockTest, SMALL_AllocateAndUseCustomStruct)
 {
 
     struct CS
@@ -182,7 +182,7 @@ TEST(HallocBlockTest, BlockTest_AllocateAndUseCustomStruct)
 /**
  * @test Sequential allocations of varying sizes verify metadata tracking and size correctness
  */
-TEST(HallocBlockTest, BlockTest_MultipleAllocations)
+TEST(HallocBlockTest, SMALL_MultipleAllocations)
 {
     Block block(2048);
     std::vector<int> vals = {16, 32, 64, 128, 256, 512};
@@ -203,7 +203,7 @@ TEST(HallocBlockTest, BlockTest_MultipleAllocations)
 /**
  * @test Deallocations create merged free blocks enabling larger allocations (coalescing verification)
  */
-TEST(HallocBlockTest, BlockTest_MultipleAllocationsWithDeletionsMustMerge)
+TEST(HallocBlockTest, SMALL_MultipleAllocationsWithDeletionsMustMerge)
 {
     Block block(1311);
     std::vector<int> vals = {16, 32, 64, 128, 256, 512};
@@ -227,7 +227,7 @@ TEST(HallocBlockTest, BlockTest_MultipleAllocationsWithDeletionsMustMerge)
 /**
  * @test 50K random allocations with 60% deallocation followed by 10K reallocations tests memory reuse
  */
-TEST(HallocBlockTest, StressTest_RandomAllocationsAndDeallocations)
+TEST(HallocBlockTest, STRESS_RandomAllocationsAndDeallocations)
 {
     Block block(512 * 1024 * 1024); // 512MB block
 
@@ -287,7 +287,7 @@ TEST(HallocBlockTest, StressTest_RandomAllocationsAndDeallocations)
 /**
  * @test Alternating allocation/deallocation patterns verify coalescing under heavy fragmentation (10K+ allocs)
  */
-TEST(HallocBlockTest, StressTest_FragmentationAndCoalescing)
+TEST(HallocBlockTest, STRESS_FragmentationAndCoalescing)
 {
     Block block(1024 * 1024 * 1024);
 
@@ -364,7 +364,7 @@ TEST(HallocBlockTest, StressTest_FragmentationAndCoalescing)
 /**
  * @test Exponentially increasing sizes (1KB to GB) with random deallocation stresses RB-tree balancing (100K+ ops)
  */
-TEST(HallocBlockTest, StressTest_WorstCaseRBTreeDepth)
+TEST(HallocBlockTest, STRESS_WorstCaseRBTreeDepth)
 {
     Block block(2ULL * 1024 * 1024 * 1024); // 2GB block
 

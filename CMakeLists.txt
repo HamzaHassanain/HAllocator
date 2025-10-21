@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(hh_alloc)
+project(hallocator VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # For clang-tidy
@@ -52,9 +52,14 @@ if(ENABLE_CLANG_TIDY)
 endif()
 
 
+# ==================== SUBDIRECTORIES ====================
+
 add_subdirectory(basic-allocator)
 add_subdirectory(rb-tree)
 add_subdirectory(halloc)
+
+
+# ==================== TESTING ====================
 
 enable_testing()
 

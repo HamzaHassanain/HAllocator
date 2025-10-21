@@ -3,8 +3,6 @@
 # Exit on any error
 set -e
 
-echo "Running Script..."
-
 # Ensure we're in the project root directory
 cd "$(dirname "$0")"
 
@@ -15,7 +13,7 @@ if [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "Commands:"
     echo "  clean              - Remove build directory"
     echo "  build              - Build the project (default)"
-    echo "  test [PATTERN]     - Run tests (optional: filter by pattern)"
+    echo "  test [PATTERN]     - Run tests (optional: filter by pattern) or 'small-only' for small tests"
     echo "  run                - Run the main executable"
     echo "  format             - Format all source files with clang-format"
     echo "  format-check       - Check formatting without modifying files"
@@ -35,10 +33,9 @@ fi
 # ==================== CLEAN ====================
 if [ "$1" = "clean" ]; then
     echo "Cleaning previous build..."
-    rm -rf out
+    rm -rf build
     shift
 fi
-
 
 
 # ==================== NORMAL BUILD ====================
@@ -47,15 +44,15 @@ fi
 if [ "$1" = "build" ] || [ -z "$1" ]; then
     echo "Building project..."
     
-    mkdir -p out
+    mkdir -p build
     
     # Configure the project with CMake
     echo "Configuring CMake..."
-    cmake -S . -B out
+    cmake -S . -B build
     
     # Build the project
     echo "Building project..."
-    cd out
+    cd build
     make -j$(nproc)
     cd ..
     
@@ -96,13 +93,13 @@ if [ "$1" = "lint" ]; then
     echo "Running clang-tidy linter..."
     
     # Build with compile_commands.json first
-    mkdir -p out
-    cmake -S . -B out -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    mkdir -p build
+    cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     
     # Run clang-tidy on source files, header files, implementation files
     find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.ipp" \) \
     ! -path "./out/*" ! -path "./build/*" ! -path "./tests/*" ! -path "./basic-allocator/*" \
-    -exec clang-tidy -p out {} \;
+    -exec clang-tidy -p build {} \;
     
     echo "Linting completed!"
     exit 0
@@ -113,31 +110,30 @@ if [ "$1" = "sanitize" ]; then
     SANITIZER_TYPE=${2:-address}
     echo "Building with $SANITIZER_TYPE sanitizer..."
     
-    mkdir -p out
-    cmake -S . -B out -DSANITIZER=$SANITIZER_TYPE
-    cd out
+    mkdir -p build
+    cmake -S . -B build -DSANITIZER=$SANITIZER_TYPE
+    cd build
     make -j$(nproc)
     cd ..
     
     echo "Build with sanitizer completed!"
-    echo "Run tests with: cd out && ctest --output-on-failure"
+    echo "Run tests with: cd build && ctest --output-on-failure"
     exit 0
 fi
 
 # ==================== TEST ====================
 if [ "$1" = "test" ]; then
     echo "Running tests..."
-    cd out
+    cd build
     if [ -n "$2" ]; then
-        ctest -R "$2" --output-on-failure
+        if [ "$2" = "small-only" ]; then
+            ctest -R "SMALL_" --output-on-failure
+            exit 0
+        else
+            ctest -R "$2" --output-on-failure
+        fi
     else
         ctest --output-on-failure
     fi
     cd ..
-fi
-
-# ==================== RUN ====================
-if [ "$1" = "run" ]; then
-    echo "Running hh_alloc..."
-    ./out/hh_alloc
 fi

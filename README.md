@@ -79,9 +79,8 @@ This project is a C++ allocator library, not a standalone application. To use it
 
 ```cmake
 add_subdirectory(HAllocator)
-target_link_libraries(your_target PRIVATE halloc)
-target_include_directories(your_target PRIVATE
-  ${CMAKE_SOURCE_DIR}/HAllocator/halloc/includes)
+target_link_libraries(your_target PRIVATE hallocator)
+
 ```
 
 2. In your C++ code, include and use the allocator:
