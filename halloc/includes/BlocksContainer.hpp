@@ -16,6 +16,7 @@
 #include "Block.hpp"
 
 namespace hh::halloc {
+
 /**
  * @brief Manages multiple memory blocks for scalable allocation.
  *
@@ -99,6 +100,13 @@ public:
      * @warning Undefined behavior if ptr was not allocated by this container
      */
     void deallocate(void* ptr, std::size_t bytes);
+
+    /**
+     * @brief Logs the current state of the container to a file.
+     *
+     * @param logfile_dir Directory to write the log file
+     */
+    void log_container_state(std::ofstream& logfile) const;
 };
 }  // namespace hh::halloc
 
@@ -187,7 +195,7 @@ BlocksContainer<BlockSize, MaxNumBlocks>::BlocksContainer() {
  * 3. If not found:
  *    a. Check if we can create a new block (current_block_index + 1 < MaxNumBlocks)
  *    b. If yes: create new block, find best-fit in new block, allocate
- *    c. If no: return nullptr (allocation failure)
+ *    c. If no: We allocate via mmap, and return the pointer to the allocated memory
  *
  * @tparam BlockSize Size of each memory block
  * @tparam MaxNumBlocks Maximum number of blocks
@@ -214,15 +222,17 @@ void* BlocksContainer<BlockSize, MaxNumBlocks>::allocate(std::size_t bytes) {
             blocks[current_block_index] = std::move(Block(BlockSize));
             index = current_block_index;
             node = blocks[index].best_fit(bytes);
-        } else {
-            // No space for new block
-            return nullptr;
         }
     }
 
-    // Guard Allocation Against Not Enough Memory
+    /**
+     * @brief The updated allocation logic here:
+     * use mmap to allocate memory directly if no suitable block is found
+     * then when deallocate, if the address of the node needed for allocation not included in the
+     * block, we try to munmap it.
+     */
     if (!node) {
-        return nullptr;
+        return REQUEST_MEMORY_VIA_MMAP(bytes);
     }
 
     // Allocate from the selected block
@@ -248,7 +258,7 @@ void* BlocksContainer<BlockSize, MaxNumBlocks>::allocate(std::size_t bytes) {
  * @pre ptr was allocated by this container
  * @post Memory is freed and merged with adjacent free blocks
  *
- * @warning Undefined behavior if ptr was not allocated by this container
+ * @warning Undefined behavior if ptr was not allocated by this container MAY CAUSE SEGFAULT
  */
 template <std::size_t BlockSize, int MaxNumBlocks>
 void BlocksContainer<BlockSize, MaxNumBlocks>::deallocate(void* ptr, std::size_t bytes) {
@@ -264,6 +274,23 @@ void BlocksContainer<BlockSize, MaxNumBlocks>::deallocate(void* ptr, std::size_t
         }
     }
 
-    throw std::invalid_argument("Pointer not allocated by this container");
+    /**
+     * @brief updated deallocation logic here:
+     *  we try to munmap the memory directly if the address of the node needed for deallocation
+     */
+    RELEASE_MEMORY_VIA_MUNMAP(ptr, bytes);
+}
+
+template <std::size_t BlockSize, int MaxNumBlocks>
+void BlocksContainer<BlockSize, MaxNumBlocks>::log_container_state(std::ofstream& logfile) const {
+    logfile << "=================================================\n";
+    logfile << "BlocksContainer State:\n";
+    logfile << "Total Blocks: " << (current_block_index + 1) << "\n";
+    for (int i = 0; i <= current_block_index; i++) {
+        logfile << "---------------- Block " << i << " ----------------\n";
+        blocks[i].log_block_state(logfile);
+        logfile << "---------------- End Block " << i << " ----------------\n";
+    }
+    logfile << "=================================================\n\n";
 }
 };  // namespace hh::halloc

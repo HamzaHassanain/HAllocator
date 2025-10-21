@@ -88,7 +88,7 @@
 
 <h2 id="overview">Overview</h2>
 
-HAllocator is a modern C++ memory allocator implementation that provides efficient memory management through advanced data structures and algorithms. This documentation is intended for developers who want to understand the internals, extend the functionality, or integrate HAllocator into their projects.
+HAllocator is a C++ memory allocator implementation that provides memory management through advanced data structures and algorithms. This documentation is intended for developers who want to understand the internals, extend the functionality, or integrate HAllocator into their projects.
 
 ### Key Features
 
@@ -105,7 +105,7 @@ HAllocator is a modern C++ memory allocator implementation that provides efficie
 
 <h3 id="core-components">Core Components</h3>
 
-<h4 id="block-component">1. <strong>Block</strong> (<code>halloc/includes/Block.hpp</code>)</h4>
+<h4 id="block-component">1. Block (<code>halloc/includes/Block.hpp</code>)</h4>
 
 The fundamental unit of memory management. Each Block represents a contiguous region of memory that can be subdivided into smaller allocations.
 
@@ -124,13 +124,13 @@ public:
     explicit Block(size_t size);
     void* allocate(size_t size, void* hint = nullptr);
     void deallocate(void* ptr, size_t size);
-    void* best_fit(size_t size);
-    size_t available() const;
-    void print_stats() const;
+
+    MemoryNode* best_fit(size_t size);
+    void log_block_state(std::ofstream& logfile) const;
 };
 ```
 
-<h4 id="blockscontainer-component">2. <strong>BlocksContainer</strong> (<code>halloc/includes/BlocksContainer.hpp</code>)</h4>
+<h4 id="blockscontainer-component">2. BlocksContainer (<code>halloc/includes/BlocksContainer.hpp</code>)</h4>
 
 A container that manages multiple Block instances, providing a higher-level allocation interface.
 
@@ -141,16 +141,21 @@ A container that manages multiple Block instances, providing a higher-level allo
 - Expands capacity by adding new blocks when needed
 - Provides aggregated statistics
 
-**Template Parameters:**
+**Public API:**
 
 ```cpp
 template<size_t BlockSize, size_t MaxBlocks>
 class BlocksContainer {
-    // ...
+public:
+    BlocksContainer();
+    void* allocate(size_t size);
+    void deallocate(void* ptr, size_t size);
+
+    void log_container_state(std::ofstream& logfile) const;
 };
 ```
 
-<h4 id="halloc-component">3. <strong>Halloc</strong> (<code>halloc/includes/Halloc.hpp</code>)</h4>
+<h4 id="halloc-component">3. Halloc (<code>halloc/includes/Halloc.hpp</code>)</h4>
 
 The main allocator interface that provides STL-compatible memory allocation.
 
@@ -166,11 +171,26 @@ The main allocator interface that provides STL-compatible memory allocation.
 ```cpp
 template<typename T, size_t BlockSize = 1024 * 1024, size_t MaxBlocks = 4>
 class Halloc {
-    // STL allocator interface
+  public:
+  // ..................
+  // C++ STL Allocator requirements
+  // ..................
+    using value_type = T;
+
+    Halloc();
+
+    // Copy constructor for different types
+    template<typename U>
+    Halloc(const Halloc<U, BlockSize, MaxBlocks>& other);
+
+    T* allocate(size_t n);
+    void deallocate(T* p, size_t n);
+
+    void log_container_state(const char* logfile_dir) const;
 };
 ```
 
-<h4 id="rbtreedriver-component">4. <strong>RBTreeDriver</strong> (<code>rb-tree/</code>)</h4>
+<h4 id="rbtreedriver-component">4. RBTreeDriver (<code>rb-tree/</code>)</h4>
 
 A Red-Black Tree implementation optimized for memory region management.
 
@@ -190,74 +210,69 @@ A Red-Black Tree implementation optimized for memory region management.
 Each Block maintains its memory in the following structure:
 
 ```
-┌─────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────┐
 │                   Block Header                       │
-│  (metadata: size, free list head, RB tree root)     │
-├─────────────────────────────────────────────────────┤
+│  (metadata: size, free list head, RB tree root)      │
+├──────────────────────────────────────────────────────┤
 │                                                      │
 │              Allocatable Memory Region               │
 │                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐         │
-│  │  Region  │  │  Region  │  │  Region  │  ...    │
-│  │  Header  │  │  Header  │  │  Header  │         │
-│  ├──────────┤  ├──────────┤  ├──────────┤         │
-│  │   Data   │  │   Data   │  │   Data   │         │
-│  └──────────┘  └──────────┘  └──────────┘         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+│  │  Region  │  │  Region  │  │  Region  │  ...       │
+│  │  Header  │  │  Header  │  │  Header  │            │
+│  ├──────────┤  ├──────────┤  ├──────────┤            │
+│  │   Data   │  │   Data   │  │   Data   │            │
+│  └──────────┘  └──────────┘  └──────────┘            │
 │                                                      │
-└─────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────┘
 ```
 
 <h3 id="allocation-algorithm">Allocation Algorithm</h3>
 
-1. **Search Phase**: Use RB tree to find best-fit free region
-2. **Split Phase**: If region is larger than needed, split it
-3. **Update Phase**: Update free list and RB tree
-4. **Return Phase**: Return pointer to allocated memory
+This is more of a Buffer Manager, we request the spacifed block size from the OS and then we manage allocations within that block.
+
+When an allocation request is made, HAllocator performs the following steps:
+
+1. **Construction**: It constructs a `BlocksContainer` instance that manages multiple `Block` instances.
+2. **allocation**:
+
+   1. Searches the RB tree for the best-fit free region that can satisfy the request.
+   2. If a suitable region is found, it splits the region if it's larger than needed.
+   3. Updates the free list and RB tree to reflect the allocation.
+   4. Returns a pointer to the allocated memory.
+   5. IF NO SUITABLE REGION IS FOUND, IT MAKES AN `mmap` CALL TO THE OS TO GET MORE MEMORY FOR THIS SPECIFIC ALLOCATION
+
+3. **Deallocation**:
+   1. Marks the region as free.
+   2. Attempts to coalesce with adjacent free regions.
+   3. Updates the free list and RB tree accordingly.
 
 ```cpp
-// This is Just a conceptual snippet, not the actual code
-void* Block::allocate(size_t size, void* hint) {
-    // 1. Find best-fit region (O(log n))
-    void* region = best_fit(size);
+T* Halloc::allocate(std::size_t count) {
+    // Calcuate the Size needed
+    size_t size = count * sizeof(T);
 
-    // 2. Split if necessary
-    if (region_size(region) > size + MIN_SPLIT_SIZE) {
-        split_region(region, size);
-    }
+    // allocate from the block, it then forwards to the appropriate Block,
+    void* ptr = blocks->allocate(size);
 
-    // 3. Mark as used and update structures
-    mark_used(region);
-    remove_from_free_list(region);
-
-    // 4. Return pointer
-    return region;
+    return static_cast<T*>(ptr);
 }
 ```
 
 <h3 id="deallocation-coalescing">Deallocation and Coalescing</h3>
 
-When memory is freed, HAllocator attempts to merge it with adjacent free blocks:
+When memory is freed, HAllocator attempts to merge it with adjacent free blocks and updates the RB tree and free list accordingly.
 
 ```cpp
 // This is Just a conceptual snippet, not the actual code
-void Block::deallocate(void* ptr, size_t size) {
-    // 1. Mark region as free
-    mark_free(ptr);
+void Halloc::deallocate(T* p, std::size_t count) {
+    size_t size = count * sizeof(T);
 
-    // 2. Try to coalesce with previous block
-    if (prev_is_free(ptr)) {
-        ptr = coalesce_with_prev(ptr);
-    }
+    // deallocate in the block
+    blocks->deallocate(static_cast<void*>(p), size);
 
-    // 3. Try to coalesce with next block
-    if (next_is_free(ptr)) {
-        coalesce_with_next(ptr);
-    }
-
-    // 4. Add to free list and RB tree
-    add_to_free_list(ptr);
-    rb_tree.insert(ptr);
-}
+    // Coalescing is handled within the Block's deallocate method
+  }
 ```
 
 <h3 id="rbtree-properties">Red-Black Tree Properties</h3>
@@ -1179,15 +1194,6 @@ Use clang-format to format your code:
 <h2 id="license">License</h2>
 
 HAllocator is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
-
----
-
-<h2 id="contact">Contact</h2>
-
-- **Author**: Hamza Hassanain
-- **GitHub**: [@HamzaHassanain](https://github.com/HamzaHassanain)
-- **Project**: [HAllocator](https://github.com/HamzaHassanain/HAllocator)
-- **Documentation**: [https://hamzahassanain.github.io/HAllocator/](https://hamzahassanain.github.io/HAllocator/)
 
 ---
 

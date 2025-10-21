@@ -66,23 +66,6 @@ struct MemoryNode {
 };
 
 /**
- * @struct BlockState
- * @brief Represents the state of a memory block
- *
- * This structure holds information about the memory block's usage,
- * including free and used space, as well as the number of nodes.
- */
-struct BlockState {
-    std::size_t total_free_space;    ///< Total free space in the block
-    std::size_t total_used_space;    ///< Total used space in the block
-    std::size_t actual_used_space;   ///< Actual used space excluding metadata
-    std::size_t headers_used_space;  ///< Space used by metadata headers
-    std::size_t block_size;          ///< Total size of the block
-    std::size_t num_free_nodes;      ///< Number of free nodes in the block
-    std::size_t num_used_nodes;      ///< Number of used nodes in the block
-};
-
-/**
  * @def MEMORY_NODE_SIZE
  * @brief Size of the MemoryNode metadata structure
  */
@@ -101,7 +84,6 @@ struct BlockState {
  * Internal fragmentation is minimized through block splitting and coalescing.
  */
 class Block {
-    BlockState block_state;            ///< Current state of the memory block
     std::size_t size;                  ///< Total block size including metadata
     MemoryNode* head;                  ///< First node in the memory block
     RBTreeDriver<MemoryNode> rb_tree;  ///< Red-Black tree of free nodes
@@ -110,28 +92,28 @@ class Block {
      * @param value Encoded value with color and status bits
      * @return Size in bytes (bits 0-61)
      */
-    std::size_t get_actual_value(std::size_t value);
+    std::size_t get_actual_value(std::size_t value) const;
 
     /**
      * @brief Marks a memory region as allocated
      * @param value Reference to the node's value field
      * @post Bit 62 is set to 1 (used)
      */
-    void mark_as_used(std::size_t& value);
+    void mark_as_used(std::size_t& value) const;
 
     /**
      * @brief Marks a memory region as free
      * @param value Reference to the node's value field
      * @post Bit 62 is set to 0 (free)
      */
-    void mark_as_free(std::size_t& value);
+    void mark_as_free(std::size_t& value) const;
 
     /**
      * @brief Checks if a memory region is free
      * @param value The node's value field
      * @return true if free (bit 62 is 0), false if used
      */
-    bool is_free(const std::size_t& value);
+    bool is_free(const std::size_t& value) const;
 
     /**
      * @brief Splits a node and creates remainder as new free node
@@ -256,12 +238,58 @@ public:
     void deallocate(void* ptr, std::size_t bytes);
 
     /**
-     * @brief Get the block state object
+     * @brief Logs the current state of the block to a file.
      *
-     * Returns a struct containing various statistics about the block's usage.
-     *
-     * @return BlockState
+     * The log includes:
+     *      Address: memory address of the block
+     *      Total Size: of the block
+     *      For each MemoryNode:
+     *              Address | Size | Status (Free/Used)
+     *        Summary statistics:
+     *              Actual Free Space (The data used by the app)
+     *              Total Used Space
+     *              Headers Used Space
+     *              Number of Free Nodes
+     *              Number of Used Nodes
+     * @param logfile_dir Path to the log file.
+     * @post Appends the block state information to the specified log file.
      */
-    BlockState get_block_state() const { return block_state; }
+    void log_block_state(std::ofstream& logfile) const {
+        ;
+        logfile << "Block State:\n";
+        logfile << "Address: " << this << "\n";
+        logfile << "Total Size: " << size << " bytes\n";
+
+        auto current = head;
+        std::size_t free_space = 0;
+        std::size_t actual_used_space = 0;
+        std::size_t num_free_nodes = 0;
+        std::size_t num_used_nodes = 0;
+        std::size_t headers_used_space = 0;
+
+        std::size_t i = 0;
+        while (current) {
+            logfile << "---------------- Node " << ++i << " ----------------\n";
+            std::size_t node_size = get_actual_value(current->value);
+            headers_used_space += MEMORY_NODE_SIZE;
+            logfile << "Node Address: " << current << " | Size: " << node_size << " bytes"
+                    << " | Status: " << (is_free(current->value) ? "Free" : "Used") << "\n";
+            if (is_free(current->value)) {
+                free_space += node_size;
+                num_free_nodes++;
+            } else {
+                actual_used_space += node_size;
+                num_used_nodes++;
+            }
+            current = current->next;
+        }
+
+        logfile << "-------------------------------------------------------\n";
+        logfile << "Free Space: " << free_space << " bytes\n";
+        logfile << "Actual Used Space: " << actual_used_space << " bytes\n";
+        logfile << "Headers Used Space: " << headers_used_space << " bytes\n";
+        logfile << "Number of Free Nodes: " << num_free_nodes << "\n";
+        logfile << "Number of Used Nodes: " << num_used_nodes << "\n";
+    }
 };
 }  // namespace hh::halloc

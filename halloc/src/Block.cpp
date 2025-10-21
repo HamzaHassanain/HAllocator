@@ -15,22 +15,22 @@
 
 namespace hh::halloc {
 
-std::size_t Block::get_actual_value(std::size_t value) {
+std::size_t Block::get_actual_value(std::size_t value) const {
     // Clear bits 62-63 (status and color), keep bits 0-61 (size)
     return value & ~(3ull << 62);
 }
 
-void Block::mark_as_used(std::size_t& value) {
+void Block::mark_as_used(std::size_t& value) const {
     // Set bit 62 to indicate allocated/used
     value |= (1ull << 62);
 }
 
-void Block::mark_as_free(std::size_t& value) {
+void Block::mark_as_free(std::size_t& value) const {
     // Clear bit 62 to indicate free
     value &= ~(1ull << 62);
 }
 
-bool Block::is_free(const std::size_t& value) {
+bool Block::is_free(const std::size_t& value) const {
     // Check if bit 62 is clear (free)
     return !(value & (1ull << 62));
 }

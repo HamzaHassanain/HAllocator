@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <fstream>
 #include <memory>
 
 #include "BlocksContainer.hpp"
@@ -176,6 +177,21 @@ public:
      * @warning Do not use any pointers allocated by this allocator after destruction
      */
     ~Halloc();
+
+    /**
+     * @brief Logs the current state of the container to a file.
+     *
+     * @param logfile_dir Directory to write the log file
+     */
+    void log_container_state(const char* logfile_dir) const {
+        std::ofstream logfile;
+        logfile.open(logfile_dir, std::ios::app);
+        logfile << "#####################################################\n";
+        logfile << "Halloc Allocator State:\n";
+        blocks->log_container_state(logfile);
+        logfile << "#####################################################\n";
+        logfile.close();
+    }
 };
 }  // namespace hh::halloc
 

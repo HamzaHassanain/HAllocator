@@ -29,8 +29,9 @@ TEST(HallocTest, STRESS_TestWithVector) {
 
     std::vector<int, Halloc<int, 1024 * 1024 * 256>> v;
 
-    const int COUNT = (1024 * 1024 * 16);
+    const int COUNT = (1024 * 1024 * 64);
     // v.reserve(COUNT); // Reserve space for 1M elements
+
     for (int i = 0; i < COUNT; i++) {
         v.push_back(i);
     }
@@ -39,10 +40,13 @@ TEST(HallocTest, STRESS_TestWithVector) {
         EXPECT_EQ(v[i], i);
     }
 
+    v.get_allocator().log_container_state(
+        "/home/hamza/Documents/Projects/test-alloc/HAllocator/halloc_vector.log");
+
     EXPECT_EQ(v.size(), COUNT);
 }
 
-TEST(HallocTest, STRESS_TestWithVectorOfStructs) {
+TEST(HallocTest, STRESS_TestWithStructsVector) {
     struct MyStruct {
         int id;
         char data[64];
@@ -88,5 +92,31 @@ TEST(HallocTest, STRESS_TestWithSet) {
     for (int i = 0; i < COUNT / 4; i++) {
         int num = rng() % COUNT;
         s.insert(num);
+    }
+}
+
+TEST(HallocTest, STRESS_TestWithMap) {
+    std::map<int, char[32], std::less<int>, Halloc<std::pair<const int, char[32]>, 1024 * 128>> m;
+
+    const int COUNT = (1024);
+    for (int i = 0; i < COUNT; i++) {
+        std::snprintf(m[i], sizeof(m[i]), "Value_%d", i);
+    }
+
+    // Verify all values
+    for (int i = 0; i < COUNT; i++) {
+        EXPECT_STREQ(m[i], ("Value_" + std::to_string(i)).c_str());
+    }
+
+    // erase all numbers div by 3
+    for (int i = 0; i < COUNT; i += 3) {
+        m.erase(i);
+    }
+
+    // insert random numbers
+    std::mt19937 rng(std::random_device{}());
+    for (int i = 0; i < COUNT / 3; i++) {
+        int num = rng() % COUNT;
+        std::snprintf(m[num], sizeof(m[num]), "RandomValue_%d", num);
     }
 }

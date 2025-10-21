@@ -226,17 +226,33 @@ TEST(BlocksContainerTest, SMALL_EdgeCase_AllocateLargerThanBlockSize) {
     EXPECT_EQ(ptr, nullptr);
 }
 
+// /**
+//  * @test Allocation deallocation of a ptr not allocated by the container MAY CAUSE SEGFAULT
+//  */
+// TEST(BlocksContainerTest, SMALL_EdgeCase_DeallocateInvalidPointer) {
+//     BlocksContainer<1024, 1> container;
+//     int dummy = 10;
+//     int* ptr = &dummy;
+//     EXPECT_DEATH(
+//         { container.deallocate(ptr, sizeof(int)); },
+//         "ContainerStateException: Pointer not allocated by this container");
+
+//     // Try to allocate almost entire block (minus metadata)
+// }
+
 /**
- * @test Allocation deallocation of a ptr not allocated by the container throws exception
+ * @test Allocation of memory bigger that the containers MUST succeed via mmap and be deallocated
+ * properly
  */
-TEST(BlocksContainerTest, SMALL_EdgeCase_DeallocateInvalidPointer) {
-    BlocksContainer<1024, 1> container1;
+TEST(BlocksContainerTest, SMALL_EdgeCase_AllocateBiggerThanBlockSize_DeallocateProperly) {
+    BlocksContainer<1024, 1> container;
+    std::size_t large_size = 2048;  // Bigger than block size
+    void* ptr = container.allocate(large_size);
+    EXPECT_NE(ptr, nullptr);
 
-    auto ptr = new int;
-    EXPECT_THROW({ container1.deallocate(ptr, sizeof(int)); }, std::invalid_argument);
-    delete ptr;
+    std::memset(ptr, 0xAB, large_size);  // Use the memory
 
-    // Try to allocate almost entire block (minus metadata)
+    container.deallocate(ptr, large_size);
 }
 
 // ==================== DATA INTEGRITY TESTS ====================
