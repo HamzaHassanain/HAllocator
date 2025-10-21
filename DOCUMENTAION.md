@@ -61,18 +61,6 @@
   <li><a href="#clangd-tool">clangd - Language Server</a></li>
   </ul>
 </li>
-<li><a href="#debugging">Debugging and Troubleshooting</a>
-  <ul>
-  <li><a href="#common-issues">Common Issues</a></li>
-  <li><a href="#debug-macros">Debug Macros</a></li>
-  </ul>
-</li>
-<li><a href="#api-reference">API Reference</a>
-  <ul>
-  <li><a href="#key-classes">Key Classes</a></li>
-  <li><a href="#key-functions">Key Functions</a></li>
-  </ul>
-</li>
 <li><a href="#contributing">Contributing</a>
   <ul>
   <li><a href="#dev-workflow">Development Workflow</a></li>
@@ -807,7 +795,7 @@ Checks: >
 
 #### Check Categories
 
-##### 1. **bugprone-\*** - Bug Detection
+##### 1. **bugprone-** - Bug Detection
 
 Catches common programming errors:
 
@@ -816,7 +804,7 @@ Catches common programming errors:
 - Incorrect sizeof() usage
 - Forward declaration mismatches
 
-##### 2. **clang-analyzer-\*** - Deep Analysis
+##### 2. **clang-analyzer-** - Deep Analysis
 
 Performs path-sensitive analysis:
 
@@ -825,7 +813,7 @@ Performs path-sensitive analysis:
 - Dead code
 - Logic errors
 
-##### 3. **cppcoreguidelines-\*** - Best Practices
+##### 3. **cppcoreguidelines-** - Best Practices
 
 Enforces C++ Core Guidelines:
 
@@ -834,7 +822,7 @@ Enforces C++ Core Guidelines:
 - Avoid naked new/delete
 - RAII compliance
 
-##### 4. **google-\*** - Google Style
+##### 4. **google-** - Google Style
 
 Google C++ style conformance:
 
@@ -843,7 +831,7 @@ Google C++ style conformance:
 - Proper use of namespaces
 - Readability improvements
 
-##### 5. **modernize-\*** - Modern C++
+##### 5. **modernize-** - Modern C++
 
 Suggests modern C++ features:
 
@@ -852,7 +840,7 @@ Suggests modern C++ features:
 - Use range-based for loops
 - Use `auto` where appropriate
 
-##### 6. **performance-\*** - Optimization
+##### 6. **performance-** - Optimization
 
 Identifies performance issues:
 
@@ -861,7 +849,7 @@ Identifies performance issues:
 - Inefficient string concatenation
 - Container operations
 
-##### 7. **readability-\*** - Code Clarity
+##### 7. **readability-** - Code Clarity
 
 Improves code readability:
 
@@ -951,7 +939,7 @@ Hover:
 
 #### Features
 
-##### 1. **Code Completion**
+##### 1. Code Completion
 
 Intelligent autocomplete based on actual code analysis:
 
@@ -960,7 +948,7 @@ Block block(1024);
 block.al|    // Shows: allocate(), available()
 ```
 
-##### 2. **Go to Definition** (F12 / Ctrl+Click)
+##### 2. Go to Definition (F12 / Ctrl+Click)
 
 Jump to where functions/classes are defined:
 
@@ -968,7 +956,7 @@ Jump to where functions/classes are defined:
 block.allocate(128);  // Jump to Block::allocate definition
 ```
 
-##### 3. **Find References** (Shift+F12)
+##### 3. Find References (Shift+F12)
 
 Find all usages of a symbol across the codebase:
 
@@ -976,7 +964,7 @@ Find all usages of a symbol across the codebase:
 void* allocate(size_t size);  // Find all calls to allocate
 ```
 
-##### 4. **Real-time Diagnostics**
+##### 4. Real-time Diagnostics
 
 Shows errors and warnings as you type:
 
@@ -985,7 +973,7 @@ int* ptr = nullptr;
 *ptr = 42;  // Warning: Dereferencing null pointer
 ```
 
-##### 5. **Inlay Hints**
+##### 5. Inlay Hints
 
 Shows parameter names and deduced types inline:
 
@@ -999,7 +987,7 @@ auto ptr = get_pointer();
      // int* (shown in editor)
 ```
 
-##### 6. **Code Actions** (Ctrl+.)
+##### 6. Code Actions (Ctrl+.)
 
 Quick fixes and refactorings:
 
@@ -1008,7 +996,7 @@ Quick fixes and refactorings:
 - Implement pure virtual methods
 - Generate getters/setters
 
-##### 7. **Symbol Outline**
+##### 7. Symbol Outline
 
 View document structure:
 
@@ -1054,115 +1042,6 @@ require('lspconfig').clangd.setup{
 (add-hook 'c++-mode-hook 'eglot-ensure)
 ```
 
-#### Compilation Database
-
-clangd requires `compile_commands.json` for accurate analysis:
-
-```bash
-# Generate during build
-cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-
-# Symlink to project root (for clangd to find it)
-ln -s build/compile_commands.json .
-```
-
-#### Performance Tips
-
-1. **Enable background indexing** for faster startup
-2. **Limit cache size** if working on large codebases
-3. **Use .clangd file** to configure per-project settings
-4. **Keep compile_commands.json updated** after CMake changes
-
----
-
-<h2 id="debugging">Debugging and Troubleshooting</h2>
-
-<h3 id="common-issues">Common Issues</h3>
-
-#### Memory Leaks
-
-Use AddressSanitizer to detect leaks:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
-cmake --build build
-./build/bin/your_test
-```
-
-#### Segmentation Faults
-
-Enable core dumps and use gdb:
-
-```bash
-ulimit -c unlimited
-./build/bin/your_test
-gdb ./build/bin/your_test core
-```
-
-#### Performance Issues
-
-Use profiling tools:
-
-```bash
-# Valgrind (callgrind)
-valgrind --tool=callgrind ./build/bin/your_test
-kcachegrind callgrind.out.*
-
-# perf (Linux)
-perf record ./build/bin/your_test
-perf report
-```
-
-<h3 id="debug-macros">Debug Macros</h3>
-
-```cpp
-// Enable debug output
-#define HALLOC_DEBUG 1
-
-// Enable allocation tracking
-#define HALLOC_TRACK_ALLOCATIONS 1
-
-// Enable bounds checking
-#define HALLOC_BOUNDS_CHECK 1
-```
-
----
-
-<h2 id="api-reference">API Reference</h2>
-
-For detailed API documentation, see the [Doxygen-generated documentation](https://hamzahassanain.github.io/HAllocator/).
-
-<h3 id="key-classes">Key Classes</h3>
-
-- `hh::halloc::Block` - Single memory block manager
-- `hh::halloc::BlocksContainer<Size, MaxBlocks>` - Multiple block container
-- `hh::halloc::Halloc<T, Size, MaxBlocks>` - STL-compatible allocator
-- `hh::halloc::RBTreeDriver` - Red-Black tree implementation
-
-<h3 id="key-functions">Key Functions</h3>
-
-```cpp
-// Block operations
-void* allocate(size_t size, void* hint = nullptr);
-void deallocate(void* ptr, size_t size);
-void* best_fit(size_t size);
-size_t available() const;
-
-// Container operations
-void* allocate(size_t size);
-void deallocate(void* ptr, size_t size);
-size_t total_available() const;
-size_t num_blocks() const;
-
-// STL Allocator operations
-T* allocate(size_t n);
-void deallocate(T* p, size_t n);
-template<typename... Args> void construct(T* p, Args&&... args);
-void destroy(T* p);
-```
-
----
-
 <h2 id="contributing">Contributing</h2>
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -1193,7 +1072,7 @@ Use clang-format to format your code:
 
 <h2 id="license">License</h2>
 
-HAllocator is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
+HAllocator is licensed under the MIT License with Non-Commercial Clause. You are free to use, modify, and distribute this software for non-commercial purposes. Commercial use requires explicit written permission from the copyright holder. See [LICENSE](LICENSE) for full details.
 
 ---
 
