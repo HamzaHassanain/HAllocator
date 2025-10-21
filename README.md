@@ -7,6 +7,7 @@
 - [Setup](#setup)
 - [Quick usage](#quick-usage)
 - [Repository layout](#repository-layout)
+- [Documentation](#documentation)
 
 ## Overview
 
@@ -166,3 +167,32 @@ for(int i = 0; i < 100; ++i) {
 - `tests/` — GoogleTest unit tests
 - `CMakeLists.txt` — top-level build configuration
 - `scripts.sh` — helper script for build/test/lint/format/sanitizers
+
+## Documentation
+
+Full API documentation is available online at [https://hamzahassanain.github.io/memory-allocator-and-smart-ptr/](https://hamzahassanain.github.io/memory-allocator-and-smart-ptr/)
+
+### Building Documentation Locally
+
+To generate the documentation locally, you need [Doxygen](https://www.doxygen.nl/) installed:
+
+```bash
+# On Debian/Ubuntu
+sudo apt-get install doxygen graphviz
+
+# On macOS
+brew install doxygen graphviz
+```
+
+Then generate the documentation:
+
+```bash
+# Using Doxygen directly
+doxygen Doxyfile
+
+# Or using CMake
+cmake -S . -B build -DBUILD_DOC=ON
+cmake --build build --target doc
+```
+
+The generated documentation will be in the `docs/html/` directory. Open `docs/html/index.html` in your web browser to view it.

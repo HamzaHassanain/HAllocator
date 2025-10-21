@@ -4,4 +4,3 @@
  */
 
 #include "rb-tree.hpp"
-

@@ -59,6 +59,26 @@ add_subdirectory(rb-tree)
 add_subdirectory(halloc)
 
 
+# ==================== DOXYGEN ====================
+
+option(BUILD_DOC "Build documentation" OFF)
+
+if(BUILD_DOC)
+    find_package(Doxygen)
+    if(DOXYGEN_FOUND)
+        add_custom_target(doc
+            COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            VERBATIM
+        )
+        message(STATUS "Doxygen found. Use 'make doc' or 'cmake --build . --target doc' to generate documentation.")
+    else()
+        message(WARNING "Doxygen not found. Documentation will not be generated.")
+    endif()
+endif()
+
+
 # ==================== TESTING ====================
 
 enable_testing()
