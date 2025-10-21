@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Install Doxygen
         run: sudo apt-get install -y doxygen
         # Add Graphviz if needed for diagrams
@@ -29,16 +29,16 @@ jobs:
 
       - name: Generate Doxygen docs
         run: doxygen Doxyfile
-      
+
       - name: Prepare for deployment
         # The default output directory for HTML is 'html'
         # Add a .nojekyll file to prevent Jekyll processing
-        run: touch html/.nojekyll
+        run: touch ./docs/html/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './html' # Assumes Doxygen generates files in the 'html' directory
+          path: "./docs/html" # Assumes Doxygen generates files in the 'html' directory
 
   deploy:
     environment:
