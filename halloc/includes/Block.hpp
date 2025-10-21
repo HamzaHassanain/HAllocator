@@ -66,6 +66,23 @@ struct MemoryNode {
 };
 
 /**
+ * @struct BlockState
+ * @brief Represents the state of a memory block
+ *
+ * This structure holds information about the memory block's usage,
+ * including free and used space, as well as the number of nodes.
+ */
+struct BlockState {
+    std::size_t total_free_space;    ///< Total free space in the block
+    std::size_t total_used_space;    ///< Total used space in the block
+    std::size_t actual_used_space;   ///< Actual used space excluding metadata
+    std::size_t headers_used_space;  ///< Space used by metadata headers
+    std::size_t block_size;          ///< Total size of the block
+    std::size_t num_free_nodes;      ///< Number of free nodes in the block
+    std::size_t num_used_nodes;      ///< Number of used nodes in the block
+};
+
+/**
  * @def MEMORY_NODE_SIZE
  * @brief Size of the MemoryNode metadata structure
  */
@@ -84,10 +101,10 @@ struct MemoryNode {
  * Internal fragmentation is minimized through block splitting and coalescing.
  */
 class Block {
+    BlockState block_state;            ///< Current state of the memory block
     std::size_t size;                  ///< Total block size including metadata
     MemoryNode* head;                  ///< First node in the memory block
     RBTreeDriver<MemoryNode> rb_tree;  ///< Red-Black tree of free nodes
-
     /**
      * @brief Extracts actual size from encoded value
      * @param value Encoded value with color and status bits
@@ -237,5 +254,14 @@ public:
      * @post Merged block is inserted into RB-tree
      */
     void deallocate(void* ptr, std::size_t bytes);
+
+    /**
+     * @brief Get the block state object
+     *
+     * Returns a struct containing various statistics about the block's usage.
+     *
+     * @return BlockState
+     */
+    BlockState get_block_state() const { return block_state; }
 };
 }  // namespace hh::halloc

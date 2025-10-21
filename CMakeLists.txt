@@ -59,6 +59,18 @@ add_subdirectory(rb-tree)
 add_subdirectory(halloc)
 
 
+# ===================== Build Library =====================
+add_library(hallocator STATIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/halloc/src/Block.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/basic-allocator/basic_alloc.cpp
+)
+
+target_link_libraries( hallocator PUBLIC 
+    basic_alloc
+    rb_tree
+    halloc)
+
+
 # ==================== DOXYGEN ====================
 
 option(BUILD_DOC "Build documentation" OFF)
