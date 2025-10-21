@@ -26,17 +26,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
       - name: Generate Doxygen docs
-        run: doxygen Doxyfile
+        run: doxygen Doxyfile.txt
 
       - name: Prepare for deployment
-        # The default output directory for HTML is 'html'
         # Add a .nojekyll file to prevent Jekyll processing
         run: touch html/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./html" # Assumes Doxygen generates files in the 'html' directory
+          path: "./html"
 
   deploy:
     environment:

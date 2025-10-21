@@ -2,56 +2,91 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-  - [Core Components](#core-components)
-    - [1. Block](#1-block-hallocincludesblockhpp)
-    - [2. BlocksContainer](#2-blockscontainer-hallocincludesblockscontainerhpp)
-    - [3. Halloc](#3-halloc-hallocincludeshallochpp)
-    - [4. RBTreeDriver](#4-rbtreedriver-rb-tree)
-- [Implementation Details](#implementation-details)
-  - [Memory Layout](#memory-layout)
-  - [Allocation Algorithm](#allocation-algorithm)
-  - [Deallocation and Coalescing](#deallocation-and-coalescing)
-  - [Red-Black Tree Properties](#red-black-tree-properties)
-- [Usage Examples](#usage-examples)
-  - [Basic Block Usage](#basic-block-usage)
-  - [Using BlocksContainer](#using-blockscontainer)
-  - [STL Container Integration](#stl-container-integration)
-  - [Custom Allocator Example](#custom-allocator-example)
-- [Testing](#testing)
-  - [Running Tests](#running-tests)
-  - [Test Coverage](#test-coverage)
-  - [Writing New Tests](#writing-new-tests)
-- [Performance Characteristics](#performance-characteristics)
-  - [Time Complexity](#time-complexity)
-  - [Space Complexity](#space-complexity)
-  - [Optimization Tips](#optimization-tips)
-- [Building from Source](#building-from-source)
-  - [Prerequisites](#prerequisites)
-  - [Build Steps](#build-steps)
-  - [CMake Options](#cmake-options)
-- [Development Tools](#development-tools)
-  - [scripts.sh - Build & Development Helper](#scriptssh---build--development-helper)
-  - [clang-format - Code Formatting](#clang-format---code-formatting)
-  - [clang-tidy - Static Analysis](#clang-tidy---static-analysis)
-  - [clangd - Language Server](#clangd---language-server)
-- [Debugging and Troubleshooting](#debugging-and-troubleshooting)
-  - [Common Issues](#common-issues)
-  - [Debug Macros](#debug-macros)
-- [API Reference](#api-reference)
-  - [Key Classes](#key-classes)
-  - [Key Functions](#key-functions)
-- [Contributing](#contributing)
-  - [Development Workflow](#development-workflow)
-  - [Code Style](#code-style)
-- [License](#license)
-- [Contact](#contact)
-- [Acknowledgments](#acknowledgments)
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#architecture">Architecture</a>
+  <ul>
+  <li><a href="#core-components">Core Components</a>
+    <ul>
+    <li><a href="#block-component">1. Block</a></li>
+    <li><a href="#blockscontainer-component">2. BlocksContainer</a></li>
+    <li><a href="#halloc-component">3. Halloc</a></li>
+    <li><a href="#rbtreedriver-component">4. RBTreeDriver</a></li>
+    </ul>
+  </li>
+  </ul>
+</li>
+<li><a href="#implementation-details">Implementation Details</a>
+  <ul>
+  <li><a href="#memory-layout">Memory Layout</a></li>
+  <li><a href="#allocation-algorithm">Allocation Algorithm</a></li>
+  <li><a href="#deallocation-coalescing">Deallocation and Coalescing</a></li>
+  <li><a href="#rbtree-properties">Red-Black Tree Properties</a></li>
+  </ul>
+</li>
+<li><a href="#usage-examples">Usage Examples</a>
+  <ul>
+  <li><a href="#basic-block-usage">Basic Block Usage</a></li>
+  <li><a href="#using-blockscontainer">Using BlocksContainer</a></li>
+  <li><a href="#stl-integration">STL Container Integration</a></li>
+  <li><a href="#custom-allocator-example">Custom Allocator Example</a></li>
+  </ul>
+</li>
+<li><a href="#testing">Testing</a>
+  <ul>
+  <li><a href="#running-tests">Running Tests</a></li>
+  <li><a href="#test-coverage">Test Coverage</a></li>
+  <li><a href="#writing-tests">Writing New Tests</a></li>
+  </ul>
+</li>
+<li><a href="#performance">Performance Characteristics</a>
+  <ul>
+  <li><a href="#time-complexity">Time Complexity</a></li>
+  <li><a href="#space-complexity">Space Complexity</a></li>
+  <li><a href="#optimization-tips">Optimization Tips</a></li>
+  </ul>
+</li>
+<li><a href="#building">Building from Source</a>
+  <ul>
+  <li><a href="#prerequisites">Prerequisites</a></li>
+  <li><a href="#build-steps">Build Steps</a></li>
+  <li><a href="#cmake-options">CMake Options</a></li>
+  </ul>
+</li>
+<li><a href="#dev-tools">Development Tools</a>
+  <ul>
+  <li><a href="#scripts-sh">scripts.sh - Build &amp; Development Helper</a></li>
+  <li><a href="#clang-format-tool">clang-format - Code Formatting</a></li>
+  <li><a href="#clang-tidy-tool">clang-tidy - Static Analysis</a></li>
+  <li><a href="#clangd-tool">clangd - Language Server</a></li>
+  </ul>
+</li>
+<li><a href="#debugging">Debugging and Troubleshooting</a>
+  <ul>
+  <li><a href="#common-issues">Common Issues</a></li>
+  <li><a href="#debug-macros">Debug Macros</a></li>
+  </ul>
+</li>
+<li><a href="#api-reference">API Reference</a>
+  <ul>
+  <li><a href="#key-classes">Key Classes</a></li>
+  <li><a href="#key-functions">Key Functions</a></li>
+  </ul>
+</li>
+<li><a href="#contributing">Contributing</a>
+  <ul>
+  <li><a href="#dev-workflow">Development Workflow</a></li>
+  <li><a href="#code-style">Code Style</a></li>
+  </ul>
+</li>
+<li><a href="#license">License</a></li>
+<li><a href="#contact">Contact</a></li>
+<li><a href="#acknowledgments">Acknowledgments</a></li>
+</ul>
 
 ---
 
-## Overview
+<h2 id="overview">Overview</h2>
 
 HAllocator is a modern C++ memory allocator implementation that provides efficient memory management through advanced data structures and algorithms. This documentation is intended for developers who want to understand the internals, extend the functionality, or integrate HAllocator into their projects.
 
@@ -66,11 +101,11 @@ HAllocator is a modern C++ memory allocator implementation that provides efficie
 
 ---
 
-## Architecture
+<h2 id="architecture">Architecture</h2>
 
-### Core Components
+<h3 id="core-components">Core Components</h3>
 
-#### 1. **Block** (`halloc/includes/Block.hpp`)
+<h4 id="block-component">1. <strong>Block</strong> (<code>halloc/includes/Block.hpp</code>)</h4>
 
 The fundamental unit of memory management. Each Block represents a contiguous region of memory that can be subdivided into smaller allocations.
 
@@ -95,7 +130,7 @@ public:
 };
 ```
 
-#### 2. **BlocksContainer** (`halloc/includes/BlocksContainer.hpp`)
+<h4 id="blockscontainer-component">2. <strong>BlocksContainer</strong> (<code>halloc/includes/BlocksContainer.hpp</code>)</h4>
 
 A container that manages multiple Block instances, providing a higher-level allocation interface.
 
@@ -115,7 +150,7 @@ class BlocksContainer {
 };
 ```
 
-#### 3. **Halloc** (`halloc/includes/Halloc.hpp`)
+<h4 id="halloc-component">3. <strong>Halloc</strong> (<code>halloc/includes/Halloc.hpp</code>)</h4>
 
 The main allocator interface that provides STL-compatible memory allocation.
 
@@ -135,7 +170,7 @@ class Halloc {
 };
 ```
 
-#### 4. **RBTreeDriver** (`rb-tree/`)
+<h4 id="rbtreedriver-component">4. <strong>RBTreeDriver</strong> (<code>rb-tree/</code>)</h4>
 
 A Red-Black Tree implementation optimized for memory region management.
 
@@ -148,9 +183,9 @@ A Red-Black Tree implementation optimized for memory region management.
 
 ---
 
-## Implementation Details
+<h2 id="implementation-details">Implementation Details</h2>
 
-### Memory Layout
+<h3 id="memory-layout">Memory Layout</h3>
 
 Each Block maintains its memory in the following structure:
 
@@ -172,7 +207,7 @@ Each Block maintains its memory in the following structure:
 └─────────────────────────────────────────────────────┘
 ```
 
-### Allocation Algorithm
+<h3 id="allocation-algorithm">Allocation Algorithm</h3>
 
 1. **Search Phase**: Use RB tree to find best-fit free region
 2. **Split Phase**: If region is larger than needed, split it
@@ -199,7 +234,7 @@ void* Block::allocate(size_t size, void* hint) {
 }
 ```
 
-### Deallocation and Coalescing
+<h3 id="deallocation-coalescing">Deallocation and Coalescing</h3>
 
 When memory is freed, HAllocator attempts to merge it with adjacent free blocks:
 
@@ -225,7 +260,7 @@ void Block::deallocate(void* ptr, size_t size) {
 }
 ```
 
-### Red-Black Tree Properties
+<h3 id="rbtree-properties">Red-Black Tree Properties</h3>
 
 The RB tree maintains these invariants:
 
@@ -239,9 +274,9 @@ This ensures O(log n) performance for all operations.
 
 ---
 
-## Usage Examples
+<h2 id="usage-examples">Usage Examples</h2>
 
-### Basic Block Usage
+<h3 id="basic-block-usage">Basic Block Usage</h3>
 
 ```cpp
 #include <halloc/includes/Block.hpp>
@@ -260,7 +295,7 @@ block.deallocate(ptr1, 128);
 block.deallocate(ptr2, 256);
 ```
 
-### Using BlocksContainer
+<h3 id="using-blockscontainer">Using BlocksContainer</h3>
 
 ```cpp
 #include <halloc/includes/BlocksContainer.hpp>
@@ -278,7 +313,7 @@ container.deallocate(ptr, 512);
 // std::cout << "Available: " << container.total_available() << " bytes\n";
 ```
 
-### STL Container Integration
+<h3 id="stl-integration">STL Container Integration</h3>
 
 ```cpp
 #include <halloc/includes/Halloc.hpp>
@@ -303,7 +338,7 @@ myMap["hello"] = 1;
 myMap["world"] = 2;
 ```
 
-### Custom Allocator Example
+<h3 id="custom-allocator-example">Custom Allocator Example</h3>
 
 ```cpp
 #include <halloc/includes/Halloc.hpp>
@@ -320,11 +355,11 @@ for (int i = 0; i < 1000; ++i) {
 
 ---
 
-## Testing
+<h2 id="testing">Testing</h2>
 
 HAllocator includes comprehensive unit tests using GoogleTest.
 
-### Running Tests
+<h3 id="running-tests">Running Tests</h3>
 
 ```bash
 # Build with tests
@@ -339,7 +374,7 @@ ctest --output-on-failure
 ./scripts.sh test
 ```
 
-### Test Coverage
+<h3 id="test-coverage">Test Coverage</h3>
 
 Tests cover:
 
@@ -351,7 +386,7 @@ Tests cover:
 - Multi-threaded scenarios (if enabled)
 - Memory corruption detection
 
-### Writing New Tests
+<h3 id="writing-tests">Writing New Tests</h3>
 
 Example test structure:
 
@@ -372,9 +407,9 @@ TEST(BlockTest, BasicAllocation) {
 
 ---
 
-## Performance Characteristics
+<h2 id="performance">Performance Characteristics</h2>
 
-### Time Complexity
+<h3 id="time-complexity">Time Complexity</h3>
 
 | Operation  | Best Case | Average Case | Worst Case |
 | ---------- | --------- | ------------ | ---------- |
@@ -383,13 +418,13 @@ TEST(BlockTest, BasicAllocation) {
 | Best-Fit   | O(log n)  | O(log n)     | O(log n)   |
 | Coalesce   | O(1)      | O(1)         | O(1)       |
 
-### Space Complexity
+<h3 id="space-complexity">Space Complexity</h3>
 
 - **Per Block**: O(1) overhead + O(n) for free regions tracking
 - **RB Tree**: O(n) where n is number of free regions
 - **Free List**: O(n) for doubly-linked list of free regions
 
-### Optimization Tips
+<h3 id="optimization-tips">Optimization Tips</h3>
 
 1. **Pre-allocate Blocks**: Create BlocksContainer with sufficient capacity
 2. **Size Classes**: Use multiple allocators for different size ranges
@@ -398,15 +433,15 @@ TEST(BlockTest, BasicAllocation) {
 
 ---
 
-## Building from Source
+<h2 id="building">Building from Source</h2>
 
-### Prerequisites
+<h3 id="prerequisites">Prerequisites</h3>
 
 - CMake 3.10+
 - C++23 compatible compiler (GCC 11+, Clang 14+, MSVC 19.30+)
 - Git
 
-### Build Steps
+<h3 id="build-steps">Build Steps</h3>
 
 ```bash
 # Clone the repository
@@ -423,7 +458,7 @@ cmake --build build --parallel
 sudo cmake --install build
 ```
 
-### CMake Options
+<h3 id="cmake-options">CMake Options</h3>
 
 ```cmake
 # Enable/disable tests
@@ -443,11 +478,11 @@ sudo cmake --install build
 
 ---
 
-## Development Tools
+<h2 id="dev-tools">Development Tools</h2>
 
 HAllocator uses a comprehensive set of modern development tools to ensure code quality, consistency, and maintainability. This section covers all the essential tools integrated into the project.
 
-### scripts.sh - Build & Development Helper
+<h3 id="scripts-sh">scripts.sh - Build &amp; Development Helper</h3>
 
 The `scripts.sh` is a unified command-line interface for all common development tasks. It simplifies building, testing, formatting, linting, and debugging operations.
 
@@ -667,7 +702,7 @@ cd build && ctest --output-on-failure
 
 ---
 
-### clang-format - Code Formatting
+<h3 id="clang-format-tool">clang-format - Code Formatting</h3>
 
 HAllocator uses **clang-format** with a customized Google C++ Style Guide for consistent code formatting.
 
@@ -736,7 +771,7 @@ autocmd BufWritePre *.cpp,*.hpp,*.h :!clang-format -i %
 
 ---
 
-### clang-tidy - Static Analysis
+<h3 id="clang-tidy-tool">clang-tidy - Static Analysis</h3>
 
 **clang-tidy** is a powerful static analysis tool that catches bugs, suggests modern C++ practices, and enforces code quality standards.
 
@@ -872,7 +907,7 @@ clang-tidy -p build -checks="modernize-*" halloc/src/Block.cpp
 
 ---
 
-### clangd - Language Server
+<h3 id="clangd-tool">clangd - Language Server</h3>
 
 **clangd** is the language server that powers intelligent code completion, navigation, and real-time diagnostics in your editor.
 
@@ -1025,9 +1060,9 @@ ln -s build/compile_commands.json .
 
 ---
 
-## Debugging and Troubleshooting
+<h2 id="debugging">Debugging and Troubleshooting</h2>
 
-### Common Issues
+<h3 id="common-issues">Common Issues</h3>
 
 #### Memory Leaks
 
@@ -1063,7 +1098,7 @@ perf record ./build/bin/your_test
 perf report
 ```
 
-### Debug Macros
+<h3 id="debug-macros">Debug Macros</h3>
 
 ```cpp
 // Enable debug output
@@ -1078,18 +1113,18 @@ perf report
 
 ---
 
-## API Reference
+<h2 id="api-reference">API Reference</h2>
 
 For detailed API documentation, see the [Doxygen-generated documentation](https://hamzahassanain.github.io/HAllocator/).
 
-### Key Classes
+<h3 id="key-classes">Key Classes</h3>
 
 - `hh::halloc::Block` - Single memory block manager
 - `hh::halloc::BlocksContainer<Size, MaxBlocks>` - Multiple block container
 - `hh::halloc::Halloc<T, Size, MaxBlocks>` - STL-compatible allocator
 - `hh::halloc::RBTreeDriver` - Red-Black tree implementation
 
-### Key Functions
+<h3 id="key-functions">Key Functions</h3>
 
 ```cpp
 // Block operations
@@ -1113,11 +1148,11 @@ void destroy(T* p);
 
 ---
 
-## Contributing
+<h2 id="contributing">Contributing</h2>
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### Development Workflow
+<h3 id="dev-workflow">Development Workflow</h3>
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -1129,7 +1164,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 8. Push to branch (`git push origin feature/amazing-feature`)
 9. Open a Pull Request
 
-### Code Style
+<h3 id="code-style">Code Style</h3>
 
 We follow the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) with minor modifications.
 
@@ -1141,13 +1176,13 @@ Use clang-format to format your code:
 
 ---
 
-## License
+<h2 id="license">License</h2>
 
 HAllocator is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## Contact
+<h2 id="contact">Contact</h2>
 
 - **Author**: Hamza Hassanain
 - **GitHub**: [@HamzaHassanain](https://github.com/HamzaHassanain)
@@ -1156,7 +1191,7 @@ HAllocator is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for de
 
 ---
 
-## Acknowledgments
+<h2 id="acknowledgments">Acknowledgments</h2>
 
 - GoogleTest for unit testing framework
 - Doxygen for documentation generation
