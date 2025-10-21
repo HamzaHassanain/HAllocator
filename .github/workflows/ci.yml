@@ -1,10 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ master, main, develop ]
-  pull_request:
-    branches: [ master, main, develop ]
   workflow_dispatch:
     inputs:
       target:
@@ -23,14 +19,12 @@ jobs:
   format-check:
     name: Check Code Formatting
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.target == 'format-check' || github.event.inputs.target == 'all'
+    if: github.event.inputs.target == 'format-check'
     steps:
       - uses: actions/checkout@v3
 
       - name: Install clang-format
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-format
+        run: sudo apt-get install -y clang-format
 
       - name: Check formatting
         run: ./scripts.sh format-check
@@ -38,7 +32,7 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.target == 'build-and-test' || github.event.inputs.target == 'all'
+    if: github.event.inputs.target == 'build-and-test'
     steps:
       - uses: actions/checkout@v3
 
@@ -56,7 +50,7 @@ jobs:
   sanitizer-tests:
     name: Sanitizer Tests
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.target == 'sanitizer-tests' || github.event.inputs.target == 'all'
+    if: github.event.inputs.target == 'sanitizer-tests'
     steps:
       - uses: actions/checkout@v3
 
@@ -79,14 +73,13 @@ jobs:
 
       - name: Build with Leak Sanitizer
         run: ./scripts.sh sanitize leak
-
       - name: Run tests
         run: ./scripts.sh test small-only
 
   lint:
     name: Static Analysis (clang-tidy)
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.target == 'lint' || github.event.inputs.target == 'all'
+    if: github.event.inputs.target == 'lint'
     steps:
       - uses: actions/checkout@v3
 
@@ -94,6 +87,47 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential clang-tidy
+
+      - name: Run linter
+        run: ./scripts.sh lint
+  all:
+    name: All Checks
+    runs-on: ubuntu-latest
+    if: github.event.inputs.target == 'all'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential clang clang-tidy
+
+      - name: Check formatting
+        run: ./scripts.sh format-check
+
+      - name: Build
+        run: ./scripts.sh clean build
+
+      - name: Run tests
+        run: ./scripts.sh test
+
+      - name: Build with Address Sanitizer
+        run: ./scripts.sh sanitize address
+
+      - name: Run Address Sanitizer tests
+        run: cd out && ctest --output-on-failure
+
+      - name: Build with Undefined Behavior Sanitizer
+        run: ./scripts.sh sanitize undefined
+
+      - name: Run Undefined Behavior Sanitizer tests
+        run: cd out && ctest --output-on-failure
+
+      - name: Build with Leak Sanitizer
+        run: ./scripts.sh sanitize leak
+
+      - name: Run Leak Sanitizer tests
+        run: cd out && ctest --output-on-failure
 
       - name: Run linter
         run: ./scripts.sh lint
